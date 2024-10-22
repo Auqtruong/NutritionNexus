@@ -29,6 +29,63 @@ def login_view(request):
     else:
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
-#List food view
+#Logout view; POST view that logs out authenticated users, returning a 200 response for success
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout_view(request):
+    logout(request)
+    return Response({"message": "Logout sucessful"}, status=status.HTTP_200_OK)
+    
+#List All Food Items View with Pagination
+class PaginatedFoodListView(generics.ListAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = [AllowAny]
+    
+#Food nutrition/details view; GETs specific food item and its info based on its Primary Key (pk)
+class FoodDetailView(generics.RetrieveAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodDetailSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'pk'
+    
+#Add Food to Daily Intake View; Must be authenticated user; Adds food item to intake based on food id
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_daily_intake(request):
+    user = request.user
+    food_id = request.data.get('food_id')
+    food = Food.objects.get(id=food_id)
+    DailyIntake.objects.create(user=user, food_eaten=food, food_entry_date=request.data.get('date'))
+    return Response({"message": f"{food.name} added to your daily intake"}, status=status.HTTP_201_CREATED)
 
-#Food nutrition/details view
+#Delete Food from Daily Intake View; Only delete if entry is available in Daily Intake; 204 if success, 404 if unable to find food entry
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_from_daily_intake(request, pk):
+    try:
+        intake = DailyIntake.objects.get(id=pk, user=request.user)
+        intake.delete()
+        return Response({"message": "Entry deleted"}, status=status.HTTP_204_NO_CONTENT)
+    except DailyIntake.DoesNotExist:
+        return Response({"error": "Entry not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+#Record User's Weight View; 201 if weight is sucessfully created and entered into log
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def record_weight(request):
+    weight = request.data.get('weight')
+    WeightTracker.objects.create(user=request.user, weight=weight, weight_entry_date=request.data.get('date'))
+    return Response({"message": "Weight recorded successfully"}, status=status.HTTP_201_CREATED)
+
+#Delete a Weight Entry from User's Weight Log; Only delete if entry is available in Weight Log; 204 if success, 404 if unable to find weight entry
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_weight_entry(request, pk):
+    try:
+        weight_entry = WeightTracker.objects.get(id=pk, user=request.user)
+        weight_entry.delete()
+        return Response({"message": "Weight entry deleted"}, status=status.HTTP_204_NO_CONTENT)
+    except WeightTracker.DoesNotExist:
+        return Response({"error": "Entry not found"}, status=status.HTTP_404_NOT_FOUND)
