@@ -39,8 +39,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
 #Specify JWT Token Lifetimes
@@ -61,7 +62,9 @@ INSTALLED_APPS = [
     "api",
     "rest_framework",
     #cors solves issues with different origins trying to hit our backend
-    "corsheaders"
+    "corsheaders",
+    "django_filters",
+    
 ]
 
 MIDDLEWARE = [

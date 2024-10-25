@@ -31,6 +31,7 @@ class Food(models.Model):
     def fetch_nutrition_data(self):
         api_url = "https://api.calorieninjas.com/v1/nutrition?query="
         query = f''
+        #Need to add API KEY for API Usage
         response = requests.get(api_url + query, headers={'X-Api-Key': 'YOUR_API_KEY'})
         
         if response.status_code == response.codes.ok:
