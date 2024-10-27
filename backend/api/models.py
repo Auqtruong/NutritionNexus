@@ -3,6 +3,9 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import requests
 
+from django.conf import settings
+User = settings.AUTH_USER_MODEL
+
 # Create your models here.
 #User Model
 class User(AbstractUser):
@@ -29,10 +32,10 @@ class Food(models.Model):
     #category for food types?
     
     def fetch_nutrition_data(self):
-        api_url = "https://api.calorieninjas.com/v1/nutrition?query="
-        query = f''
+        api_url     = "https://api.calorieninjas.com/v1/nutrition?query="
+        query       = f''
         #Need to add API KEY for API Usage
-        response = requests.get(api_url + query, headers={'X-Api-Key': 'YOUR_API_KEY'})
+        response    = requests.get(api_url + query, headers={'X-Api-Key': 'YOUR_API_KEY'})
         
         if response.status_code == response.codes.ok:
             data = response.json()
@@ -46,31 +49,63 @@ class Food(models.Model):
                 self.save()
         else:
             print(f"Error when fetching nutrition data: {response.status_code}")
+    
+    #calculate calories/macros based on quantity of food entry
+    def calculate_nutrition_for_quantity(self, quantity):
+        amount = quantity / self.quantity
+        return {
+            "calories": self.calories * amount,
+            "carbohydrates": self.carbohydrates * amount,
+            "protein": self.protein * amount,
+            "fat": self.fat * amount,
+        }
+        
                 
 
 #Daily Intake Model
 class DailyIntake(models.Model):
     #delete rows in corresponding table if rows are removed here
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    food_eaten = models.ForeignKey(Food, on_delete=models.CASCADE)
+    user            = models.ForeignKey(User, on_delete=models.CASCADE)
+    food_eaten      = models.ForeignKey(Food, on_delete=models.CASCADE)
+    #100g default for food entries
+    food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=100.00)
     food_entry_date = models.DateField(default=timezone.now)
     
+    calories        = models.DecimalField(max_digits=6, decimal_places=2, editable=False)
+    carbohydrates   = models.DecimalField(max_digits=6, decimal_places=2, editable=False)
+    protein         = models.DecimalField(max_digits=6, decimal_places=2, editable=False)
+    fat             = models.DecimalField(max_digits=6, decimal_places=2, editable=False)
+    
     class Meta:
-        verbose_name = "Daily Log"
+        #chronological ordering
+        verbose_name        = "Daily Log"
         verbose_name_plural = "Daily Logs"
+        ordering            = ["-food_entry_date"]
+        
+    #calculate cals/macros based on quantity manually entered; override Django save method
+    def save(self, *args, **kwargs):
+        nutrition           = self.food_eaten.calculate_nutrition_for_quantity(self.food_quantity)
+        self.calories       = nutrition["calories"]
+        self.carbohydrates  = nutrition["carbohydrates"]
+        self.protein        = nutrition["protein"]
+        self.fat            = nutrition["fat"]
+        super().save(*args, **kwargs)
         
     def __str__(self):
         return f'{self.user.username} - {self.food_eaten.name}'
 
 #Weight Tracker Model
 class WeightTracker(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    weight = models.DecimalField(max_digits=6, decimal_places=2)
-    weight_entry_date = models.DateField(default=timezone.now)
+    
+    user                = models.ForeignKey(User, on_delete=models.CASCADE)
+    weight              = models.DecimalField(max_digits=6, decimal_places=2)
+    weight_entry_date   = models.DateField(default=timezone.now)
     
     class Meta:
-        verbose_name = "Weight Log"
+        #chronological ordering
+        verbose_name        = "Weight Log"
         verbose_name_plural = "Weight Logs"
+        ordering            = ["-weight_entry_date"]
     
     def __str__(self):
         return f'{self.user.username} - {self.weight} lbs on {self.weight_entry_date}'

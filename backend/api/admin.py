@@ -1,13 +1,14 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin 
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Food, DailyIntake, WeightTracker
 
 # Register your models here.
 # list_display for each model displays the fields in the list view of Django Admin Interface
 # search_fields add a search bar to the Django Admin Interface, allowing the search of certain fields
 
-# Register the User model
-@admin.register(User, UserAdmin)
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    model = User
 
 # Register the Food model
 @admin.register(Food)
