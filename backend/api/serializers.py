@@ -17,17 +17,29 @@ class UserSerializer(serializers.ModelSerializer):
         #user will be created if user data/fields are validated by previous check
         user = User.objects.create_user(**validatedData)
         return user
-    
+
+#Serializer for paginated list of foods 
 class FoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
         fields = ["id", "name"]
         
+#Serializer for creating new foods
+class FoodCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Food
+        fields = ["name", "calories", "carbohydrates", "protein", "fat"]
+        
+    def create(self, validated_data):
+        return super().create(validated_data)
+        
+#Serializer for specific details (cals/macros) of a food
 class FoodDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
-        fields = ['id', 'name', 'quantity', 'calories', 'carbohydrates', 'protein', 'fat']
+        fields = ["id", "name", "quantity", "calories", "carbohydrates", "protein", "fat"]
         
+#Serializer for a user's Daily Intake Log
 class DailyIntakeSerializer(serializers.ModelSerializer):
     food_eaten      = FoodSerializer()
     calories        = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=2)
@@ -39,6 +51,7 @@ class DailyIntakeSerializer(serializers.ModelSerializer):
         model = DailyIntake
         fields = ["id", "user", "food_eaten", "food_entry_date"]
         
+#Serializer for a user's Weight Log
 class WeightTrackerSerializer(serializers.ModelSerializer):
     class Meta:
         model = WeightTracker

@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
-from .serializers import UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer
+from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer
 from .models import Food, DailyIntake, WeightTracker
 
 User = get_user_model()
@@ -55,6 +55,27 @@ class FoodDetailView(generics.RetrieveAPIView):
     serializer_class    = FoodDetailSerializer
     permission_classes  = [AllowAny]
     lookup_field        = "pk"
+    
+#Add new foods to list/database of foods; return 400 if request is unsuccessful
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_food(request):
+    serializer = FoodCreateSerializer(data=request.data)
+    if serializer.is_valid():
+        food = serializer.save()
+        return Response({"message": "Food item created successfully", "id": food.id})
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Delete existing/created foods from list/database of foods; return 204 if success, 404 if food is not found
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_food(request, pk):
+    try:
+        food = Food.objects.get(id=pk)
+        food.delete()
+        return Response({"message": "Food item deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    except Food.DoesNotExist:
+        return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
     
 #List Daily Intake of Authenticated User
 class DailyIntakeListView(generics.ListAPIView):

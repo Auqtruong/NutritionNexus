@@ -23,8 +23,6 @@ from .views import CreateUserView, DailyIntakeListView, FoodDetailView, Paginate
 from . import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    
     #Registration/Token paths
     path("api/user/register/"   , CreateUserView.as_view()      , name="register"),
     path("api/token/"           , TokenObtainPairView.as_view() , name="get_token"),
@@ -38,11 +36,10 @@ urlpatterns = [
     path("api/logout/"          , views.logout_view , name="logout"),
     
     #Food paths
-    path("api/foods/"           , PaginatedFoodListView.as_view()   , name="list_food_items"),
-    path("api/foods/<int:pk>/"  , FoodDetailView.as_view()          , name="food_detail"),
-    #Potential paths to allow Users to create custom food entries
-    # path("api/foods/add/"       , views.add_food                    , name="add_food"),
-    # path("api/foods/delete/"    , views.delete_food                 , name="delete_food"),
+    path("api/foods/"                   , PaginatedFoodListView.as_view()   , name="list_food_items"),
+    path("api/foods/<int:pk>/"          , FoodDetailView.as_view()          , name="food_detail"),
+    path("api/foods/add/"               , views.add_food                    , name="add_food"),
+    path("api/foods/delete/<int:pk>/"   , views.delete_food                 , name="delete_food"),
     
     #Daily Intake paths
     path("api/intake/"                  , DailyIntakeListView.as_view() , name="list_daily_intake"),
