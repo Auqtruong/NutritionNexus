@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -10,7 +11,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
 from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer
 from .models import Food, DailyIntake, WeightTracker
-from .utils import fetch_nutrition_data
 
 User = get_user_model()
 
@@ -56,40 +56,14 @@ class FoodDetailView(generics.RetrieveAPIView):
     permission_classes  = [AllowAny]
     lookup_field        = "pk"
     
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def get_nutrition_data(request):
-    food_query = request.query_params.get("food")
-    if not food_query:
-        return Response({"error": "No food item specified"}, status=status.HTTP_400_BAD_REQUEST)
-    
-    nutrition_data = fetch_nutrition_data(food_query)
-    if nutrition_data:
-        return Response(nutrition_data, status=status.HTTP_200_OK)
-    else:
-        return Response({"error": "Failed to fetch nutrition data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
 #Add new foods to list/database of foods; return 400 if request is unsuccessful
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_food(request):
     serializer = FoodCreateSerializer(data=request.data)
     if serializer.is_valid():
-        #fetch food name and nutrition data before saving
-        food_name       = serializer.validated_data.get("name")
-        nutrition_data  = fetch_nutrition_data(food_name)
-        
-        if nutrition_data:
-            food = serializer.save(
-                calories        = nutrition_data["calories"],
-                carbohydrates   = nutrition_data["carbohydrates"],
-                protein         = nutrition_data["protein"],
-                fat             = nutrition_data["fat"]
-            )
-            return Response({"message": "Food item created successfully", "id": food.id}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"error": "Failed to fetch nutrition data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+        food = serializer.save()
+        return Response({"message": "Food item created successfully", "id": food.id})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Delete existing/created foods from list/database of foods; return 204 if success, 404 if food is not found
@@ -125,7 +99,7 @@ def add_to_daily_intake(request):
         food = Food.objects.get(id=food_id)
         DailyIntake.objects.create(user=user, food_eaten=food, food_entry_date=request.data.get("date"))
         return Response({"message": f"{food.name} added to your daily intake"}, status=status.HTTP_201_CREATED)
-    except Food.DoesNotExist:
+    except:
         return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
 
 #Delete Food from Daily Intake View; Only delete if entry is available in Daily Intake; 204 if success, 404 if unable to find food entry
@@ -154,8 +128,6 @@ class WeightLogListView(generics.ListAPIView):
 @permission_classes([IsAuthenticated])
 def record_weight(request):
     weight = request.data.get("weight")
-    if not isinstance(weight, (int, float)):
-        return Response({"error": "Invalid weight value"}, status=status.HTTP_400_BAD_REQUEST)
     WeightTracker.objects.create(user=request.user, weight=weight, weight_entry_date=request.data.get("date"))
     return Response({"message": "Weight recorded successfully"}, status=status.HTTP_201_CREATED)
 

@@ -19,7 +19,7 @@ from django.urls import path, include
 
 #Pre-built views to obtain access/refresh tokens and refresh those tokens
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import CreateUserView, DailyIntakeListView, FoodDetailView, PaginatedFoodListView, WeightLogListView, get_nutrition_data
+from .views import CreateUserView, DailyIntakeListView, FoodDetailView, PaginatedFoodListView, WeightLogListView
 from . import views
 
 urlpatterns = [
@@ -40,7 +40,6 @@ urlpatterns = [
     path("api/foods/<int:pk>/"          , FoodDetailView.as_view()          , name="food_detail"),
     path("api/foods/add/"               , views.add_food                    , name="add_food"),
     path("api/foods/delete/<int:pk>/"   , views.delete_food                 , name="delete_food"),
-    path("api/nutrition/"               , get_nutrition_data                , name="get_nutrition_data"),
     
     #Daily Intake paths
     path("api/intake/"                  , DailyIntakeListView.as_view() , name="list_daily_intake"),
