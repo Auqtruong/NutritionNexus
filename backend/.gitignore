@@ -9,3 +9,5 @@ venv/
 .coverage
 *.log
 *.sqlite3
+bfg-1.13.2.jar
+replacements.txt
