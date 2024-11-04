@@ -31,27 +31,16 @@ class Food(models.Model):
     fat             = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
     #category for food types?
     
-    def fetch_nutrition_data(self):
-        api_url     = "https://api.calorieninjas.com/v1/nutrition?query="
-        query       = f''
-        #Need to add API KEY for API Usage
-        response    = requests.get(api_url + query, headers={'X-Api-Key': 'YOUR_API_KEY'})
-        
-        if response.status_code == response.codes.ok:
-            data = response.json()
-            #if the food item has nutrition data to return
-            if data["items"]:
-                item                = data["items"][0]
-                self.calories       = item.get("calories", 0)
-                self.carbohydrates  = item.get("carbohydrates", 0.00)
-                self.protein        = item.get("protein_g", 0.00)
-                self.fat            = item.get("fat_total_g", 0.00)
-                self.save()
-        else:
-            print(f"Error when fetching nutrition data: {response.status_code}")
-    
     #calculate calories/macros based on quantity of food entry
     def calculate_nutrition_for_quantity(self, quantity):
+        if self.quantity == 0:
+            return {
+                "calories": 0,
+                "carbohydrates": 0,
+                "protein": 0,
+                "fat": 0,
+            }
+        
         amount = quantity / self.quantity
         return {
             "calories": self.calories * amount,
@@ -60,13 +49,15 @@ class Food(models.Model):
             "fat": self.fat * amount,
         }
         
-                
+    def __str__(self):
+        return self.name     
 
 #Daily Intake Model
 class DailyIntake(models.Model):
     #delete rows in corresponding table if rows are removed here
-    user            = models.ForeignKey(User, on_delete=models.CASCADE)
-    food_eaten      = models.ForeignKey(Food, on_delete=models.CASCADE)
+    user            = models.ForeignKey(User, on_delete=models.CASCADE, related_name="daily_intakes")
+    food_eaten      = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="intakes")
+    
     #100g default for food entries
     food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=100.00)
     food_entry_date = models.DateField(default=timezone.now)
@@ -96,8 +87,7 @@ class DailyIntake(models.Model):
 
 #Weight Tracker Model
 class WeightTracker(models.Model):
-    
-    user                = models.ForeignKey(User, on_delete=models.CASCADE)
+    user                = models.ForeignKey(User, on_delete=models.CASCADE, related_name="weight_logs")
     weight              = models.DecimalField(max_digits=6, decimal_places=2)
     weight_entry_date   = models.DateField(default=timezone.now)
     
