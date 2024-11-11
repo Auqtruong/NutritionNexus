@@ -5,7 +5,7 @@ __pycache__/
 *.dll
 build/
 dist/
-venv/
+.venv/
 .coverage
 *.log
 *.sqlite3
