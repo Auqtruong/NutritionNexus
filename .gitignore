@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.py[cod]
+*.so
+*.dll
+build/
+dist/
+venv/
+.coverage
+*.log
+*.sqlite3
+*.jar
+replacements.txt
