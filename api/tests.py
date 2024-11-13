@@ -356,7 +356,7 @@ class WeightTrackerTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user        = User.objects.create_user(username="testuser", password="testpassword")
-        cls.weight_1  = WeightTracker.objects.create(user=cls.user, weight=140.00, weight_entry_date=timezone.now().date())
+        cls.weight_1    = WeightTracker.objects.create(user=cls.user, weight=140.00, weight_entry_date=timezone.now().date())
         cls.list_url    = reverse("list_weight_log")
         cls.record_url  = reverse("record_weight")
         cls.update_url  = reverse("update_weight_entry", args=[cls.weight_1.id])
@@ -430,6 +430,7 @@ class WeightTrackerTests(APITestCase):
 
     def test_update_existing_weight_entry(self):
         #Test case: User attempts to update a valid weight entry
+        self.assertTrue(WeightTracker.objects.filter(id=self.weight_1.id).exists())
         response = self.client.put(self.update_url, {"weight": 155.00, "date": timezone.now().date()}, format="json")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -440,14 +441,15 @@ class WeightTrackerTests(APITestCase):
     def test_update_non_existent_weight_entry(self):
         #Test case: User attempts to update a non-existent weight entry
         non_existent_id = WeightTracker.objects.latest("id").id + 1
-        url = reverse("update_weight_entry", args=[non_existent_id])
-        response = self.client.put(url, {"weight": 145.00}, format="json")
+        url             = reverse("update_weight_entry", args=[non_existent_id])
+        response        = self.client.put(url, {"weight": 145.00}, format="json")
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("error", response.data)
 
     def test_delete_existing_weight_entry(self):
         #Test case: User attempts to delete a valid weight entry
+        self.assertTrue(WeightTracker.objects.filter(id=self.weight_1.id).exists())
         response = self.client.delete(self.delete_url)
         
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -456,8 +458,8 @@ class WeightTrackerTests(APITestCase):
     def test_delete_non_existent_weight_entry(self):
         #Test case: User attempts to delete a non-existent weight entry
         non_existent_id = WeightTracker.objects.latest("id").id + 1
-        url = reverse("delete_weight_entry", args=[non_existent_id])
-        response = self.client.delete(url)
+        url             = reverse("delete_weight_entry", args=[non_existent_id])
+        response        = self.client.delete(url)
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("error", response.data)
