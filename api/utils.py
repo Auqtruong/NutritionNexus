@@ -23,7 +23,7 @@ def fetch_nutrition_data(user_query, api_key=settings.API_KEY):
         if items:
             item = items[0]
             return {
-                "calories": item.get("calories", 0),
+                "calories": item.get("calories", 0.00),
                 "carbohydrates": item.get("carbohydrates_total_g", 0.00),
                 "protein": item.get("protein_g", 0.00),
                 "fat": item.get("fat_total_g", 0.00),

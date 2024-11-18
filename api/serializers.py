@@ -42,14 +42,14 @@ class FoodDetailSerializer(serializers.ModelSerializer):
 #Serializer for a user's Daily Intake Log
 class DailyIntakeSerializer(serializers.ModelSerializer):
     food_eaten      = FoodSerializer()
-    calories        = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=2)
-    carbohydrates   = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=2)
-    protein         = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=2)
-    fat             = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=2)
+    calories        = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
+    carbohydrates   = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
+    protein         = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
+    fat             = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
     
     class Meta:
         model = DailyIntake
-        fields = ["id", "user", "food_eaten", "food_entry_date"]
+        fields = ["id", "user", "food_eaten", "calories", "carbohydrates", "protein", "fat", "food_entry_date"]
         
 #Serializer for a user's Weight Log
 class WeightTrackerSerializer(serializers.ModelSerializer):

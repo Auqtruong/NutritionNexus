@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.utils import timezone
@@ -8,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
-from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer
+from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer, WeightTrackerSerializer
 from .models import Food, DailyIntake, WeightTracker
 from .utils import fetch_nutrition_data
 
@@ -111,19 +112,27 @@ class DailyIntakeListView(generics.ListAPIView):
     permission_classes  = [IsAuthenticated]
     
     def get_queryset(self):
-        #show entries for current date, chronologically
-        today = timezone.now().date()
-        return DailyIntake.objects.filter(user=self.request.user, food_entry_date=today).order_by("-food_entry_date")
-
+        queryset = DailyIntake.objects.filter(user=self.request.user)
+        return queryset
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
 #Add Food to Daily Intake View; Must be authenticated user; Adds food item to intake based on food id
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_to_daily_intake(request):
-    user    = request.user
-    food_id = request.data.get("food_id")
+    user          = request.user
+    food_id       = request.data.get("food_id")
+    food_quantity = Decimal(request.data.get("food_quantity", 100.00))
+    
     try:
         food = Food.objects.get(id=food_id)
-        DailyIntake.objects.create(user=user, food_eaten=food, food_entry_date=request.data.get("date"))
+        DailyIntake.objects.create(
+            user=user, 
+            food_eaten=food,
+            food_quantity=food_quantity,
+            food_entry_date=request.data.get("date")
+        )
         return Response({"message": f"{food.name} added to your daily intake"}, status=status.HTTP_201_CREATED)
     except Food.DoesNotExist:
         return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -141,7 +150,7 @@ def delete_from_daily_intake(request, pk):
     
 #List Weight Log of Authenticated User
 class WeightLogListView(generics.ListAPIView):
-    serializer_class    = DailyIntakeSerializer
+    serializer_class    = WeightTrackerSerializer
     filter_backends     = [DjangoFilterBackend]
     filterset_class     = WeightLogFilter
     permission_classes  = [IsAuthenticated]

@@ -1,10 +1,12 @@
 from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import patch
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from .utils import fetch_nutrition_data
 from .models import Food, User, DailyIntake, WeightTracker
 from .serializers import FoodSerializer
 
@@ -15,9 +17,9 @@ class PaginatedFoodListViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         Food.objects.bulk_create([
-            Food(name="Apple" , calories=53),
-            Food(name="Banana", calories=100),
-            Food(name="Orange", calories=50),
+            Food(name="Apple" , calories=53.0),
+            Food(name="Banana", calories=100.0),
+            Food(name="Orange", calories=50.0),
         ])
         
     def test_retrieve_paginated_food_list(self):
@@ -44,7 +46,7 @@ class FoodDetailViewTests(APITestCase):
     def setUpTestData(cls):
         cls.food = Food.objects.create(
             name="Apple", 
-            calories=53,
+            calories=53.0,
             carbohydrates=14.1,
             protein=0.3,
             fat=0.2
@@ -57,10 +59,10 @@ class FoodDetailViewTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["name"], "Apple")
-        self.assertEqual(response.data["calories"], 53)
-        self.assertEqual(response.data["carbohydrates"], 14.1)
-        self.assertEqual(response.data["protein"], 0.3)
-        self.assertEqual(response.data["fat"], 0.2)
+        self.assertEqual(response.data["calories"], "53.0")
+        self.assertEqual(response.data["carbohydrates"], "14.1")
+        self.assertEqual(response.data["protein"], "0.3")
+        self.assertEqual(response.data["fat"], "0.2")
 
     def test_retrieve_non_existent_food_item(self):
         #Test case: Retrieve non-existent food item and its nutrition
@@ -81,31 +83,31 @@ class AddFoodTests(APITestCase):
 
     def test_add_food_successful(self):
         #Test case: Add food item with valid data and successful nutrition data fetching
-        with patch("api.utils.fetch_nutrition_data") as mock_fetch:
+        with patch("api.views.fetch_nutrition_data") as mock_fetch:
             mock_fetch.return_value = {
-                "calories": 57,
-                "carbohydrates": 15,
+                "calories": 57.0,
+                "carbohydrates": 15.0,
                 "protein": 0.4,
                 "fat": 0.1
             }
             
             data     = {"name": "Pear"}
             self.client.force_authenticate(user=self.user)
-            response = self.client.post(self.url, data, format="json")
+            response = self.client.post(self.url, data, format="json")            
 
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertIn("message", response.data)
             self.assertTrue(Food.objects.filter(name="Pear").exists())
             
             food = Food.objects.get(name="Pear")
-            self.assertEqual(food.calories, 57)
-            self.assertEqual(food.carbohydrates, 15)
-            self.assertEqual(food.protein, 0.4)
-            self.assertEqual(food.fat, 0.1)
+            self.assertEqual(food.calories,      round(Decimal(57.0), 1))
+            self.assertEqual(food.carbohydrates, round(Decimal(15.0), 1))
+            self.assertEqual(food.protein,       round(Decimal(0.4), 1))
+            self.assertEqual(food.fat,           round(Decimal(0.1), 1))
 
     def test_add_food_with_failed_nutrition_fetch(self):
         #Test case: Add food item with valid data but failing nutrition data fetching
-        with patch("api.utils.fetch_nutrition_data") as mock_fetch:
+        with patch("api.views.fetch_nutrition_data") as mock_fetch:
             mock_fetch.return_value = None
             
             data     = {"name": "Peach"}
@@ -131,7 +133,7 @@ class AddFoodTests(APITestCase):
         data     = {"name": "Banana"}
         response = self.client.post(self.url, data, format="json")
     
-        self.assertEqual(response.status_code, status=status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn("detail", response.data)
         self.assertFalse(Food.objects.filter(name="Banana").exists())
         
@@ -140,7 +142,7 @@ class DeleteFoodTests(APITestCase):
     def setUpTestData(cls):
         cls.food = Food.objects.create(
             name="Apple",
-            calories=53
+            calories=53.0
         )
         cls.user = User.objects.create_user(username="testuser", password="testpassword")
         
@@ -179,15 +181,16 @@ class DailyIntakeViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user        = User.objects.create_user(username="testuser", password="testpassword")
-        cls.food_1      = Food.objects.create(name="Apple" , calories=53)
-        cls.food_2      = Food.objects.create(name="Banana", calories=100)
-        cls.food_3      = Food.objects.create(name="Orange", calories=50)
-        cls.food_4      = Food.objects.create(name="Mango" , calories=75)
+        cls.food_1      = Food.objects.create(name="Apple" , calories=125.0)
+        cls.food_2      = Food.objects.create(name="Banana", calories=100.0)
+        cls.food_3      = Food.objects.create(name="Orange", calories=50.0)
+        cls.food_4      = Food.objects.create(name="Mango" , calories=150.0)
         cls.intake      = DailyIntake.objects.create(
                             user=cls.user,
                             food_eaten=cls.food_1,
+                            food_quantity=100.00,
                             food_entry_date=timezone.now().date()
-                            )
+                        )
         cls.list_url    = reverse("list_daily_intake")
         cls.add_url     = reverse("add_to_daily_intake")
         cls.delete_url  = reverse("delete_from_daily_intake", args=[cls.intake.id])
@@ -200,103 +203,96 @@ class DailyIntakeViewTests(APITestCase):
         response = self.client.get(self.list_url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["food"]["name"], "Apple")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["food_eaten"]["name"], "Apple")
         
     def test_daily_intake_filter_applied(self):
         #Test case: User attempts to filter their Daily Intake Log
-        DailyIntake.objects.create(
-            user=self.user,
-            food_eaten=self.food_1,
-            food_quantity=100,  
-            food_entry_date=timezone.now().date(),
-            calories=125,
-            )
-        DailyIntake.objects.create(
+        DailyIntake.objects.create( #Banana
             user=self.user,
             food_eaten=self.food_2,
-            food_quantity=100,
-            food_entry_date=timezone.now().date() - timedelta(days=1),
-            calories=75,
-            )
-        DailyIntake.objects.create(
+            food_quantity=100.00,
+            food_entry_date=timezone.now().date() - timedelta(days=1), #Yesterday
+            calories=100.0,
+        )
+        DailyIntake.objects.create( #Orange
             user=self.user,
             food_eaten=self.food_3,
-            food_quantity=100,
+            food_quantity=100.00,
             food_entry_date="2024-11-01",
-            calories=100
-            )
-        DailyIntake.objects.create(
+            calories=50.0
+        )
+        DailyIntake.objects.create( #Mango
             user=self.user,
             food_eaten=self.food_4,
-            food_quantity=100,
+            food_quantity=100.00,
             food_entry_date="2024-11-05",
-            calories=150
-            )
+            calories=150.0
+        )
         #Case 1: Filter by date range
         response = self.client.get(self.list_url + "?date_min=" + str(timezone.now().date() - timedelta(days=1)))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  #Should return both entries within the date range
+        self.assertEqual(len(response.data["results"]), 2)  #Should return both entries within the date range
         
         #Case 2: Filter by date range with more constraint
         response = self.client.get(self.list_url + "?date_min=" + str(timezone.now().date()))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  #Should return only today's entries
+        self.assertEqual(len(response.data["results"]), 1)  #Should return only today's entries
         
         #Case 3: Filter by two specific dates
         response = self.client.get(self.list_url + "?date_min=2024-11-01&date_max=2024-11-03")
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["food_eaten"]["name"], "Orange")  #Only the 2024-11-01 entry should appear
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["food_eaten"]["name"], "Orange")  #Only the 2024-11-01 entry should appear
         
         #Case 4: Filter by calorie range with matching entries
         response = self.client.get(self.list_url + "?calories_min=50&calories_max=100")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["calories"], 75)
-        self.assertEqual(response.data[1]["calories"], 100)
-        self.assertEqual(response.data[0]["food_eaten"]["name"], "Banana")
-        self.assertEqual(response.data[1]["food_eaten"]["name"], "Orange")
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(response.data["results"][0]["calories"], "100.0")
+        self.assertEqual(response.data["results"][1]["calories"], "50.0")
+        self.assertEqual(response.data["results"][0]["food_eaten"]["name"], "Banana")
+        self.assertEqual(response.data["results"][1]["food_eaten"]["name"], "Orange")
         
         #Case 5: Filter by calorie range with no matching entries
         response = self.client.get(self.list_url + "?calories_min=300")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  #No entries should match this range
+        self.assertEqual(len(response.data["results"]), 0)  #No entries should match this range
         
         #Case 6: Filter by calories minimum only
         response = self.client.get(self.list_url + "?calories_min=100")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 3)
-        self.assertEqual(response.data[0]["calories"], 125)
-        self.assertEqual(response.data[1]["calories"], 100)
-        self.assertEqual(response.data[2]["calories"], 150)
-        self.assertEqual(response.data[0]["food_eaten"]["name"], "Apple")
-        self.assertEqual(response.data[1]["food_eaten"]["name"], "Orange")
-        self.assertEqual(response.data[2]["food_eaten"]["name"], "Mango")
+        self.assertEqual(len(response.data["results"]), 3)
+        self.assertEqual(response.data["results"][0]["calories"], "125.0")
+        self.assertEqual(response.data["results"][1]["calories"], "100.0")
+        self.assertEqual(response.data["results"][2]["calories"], "150.0")
+        self.assertEqual(response.data["results"][0]["food_eaten"]["name"], "Apple")
+        self.assertEqual(response.data["results"][1]["food_eaten"]["name"], "Banana")
+        self.assertEqual(response.data["results"][2]["food_eaten"]["name"], "Mango")
         
         #Case 7: Filter by calories maximum only
         response = self.client.get(self.list_url + "?calories_max=100")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["calories"], 75)
-        self.assertEqual(response.data[1]["calories"], 100)
-        self.assertEqual(response.data[0]["food_eaten"]["name"], "Banana")
-        self.assertEqual(response.data[1]["food_eaten"]["name"], "Orange")
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(response.data["results"][0]["calories"], "100.0")
+        self.assertEqual(response.data["results"][1]["calories"], "50.0")
+        self.assertEqual(response.data["results"][0]["food_eaten"]["name"], "Banana")
+        self.assertEqual(response.data["results"][1]["food_eaten"]["name"], "Orange")
         
         #Case 8: Filter by both calories and date
-        response = self.client.get(self.list_url + "?date_min=2024-11-01&date_max=2024-11-05&calories_min=75&calories_max=125")
+        response = self.client.get(self.list_url + "?date_min=2024-11-01&date_max=2024-11-05&calories_min=100&calories_max=200")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["calories"], 100)
-        self.assertEqual(response.data[0]["food_eaten"]["name"], "Orange")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["calories"], "150.0")
+        self.assertEqual(response.data["results"][0]["food_eaten"]["name"], "Mango")
         
     def test_retrieve_daily_intake_for_unauthenticated_user(self):
         #Test case: Unauthorized user attempts to retrieve a Daily Intake Log
@@ -368,10 +364,10 @@ class WeightTrackerTests(APITestCase):
     def test_retrieve_weight_logs_authenticated_user(self):
         #Test case: Authenticated user retrieves their weight logs
         response = self.client.get(self.list_url)
-        
+                
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["weight"], "140.00")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["weight"], "140.00")
 
     def test_weight_log_filter_by_date(self):
         #Create additional entries for filtering
@@ -382,16 +378,16 @@ class WeightTrackerTests(APITestCase):
         response = self.client.get(self.list_url + "?date_min=" + str(timezone.now().date() - timedelta(days=3)))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  #Should include entries within the past 3 days
-        self.assertEqual(response.data[0]["weight"], "140.00")
-        self.assertEqual(response.data[1]["weight"], "200.00")
+        self.assertEqual(len(response.data["results"]), 2)  #Should include entries within the past 3 days
+        self.assertEqual(response.data["results"][0]["weight"], "140.00")
+        self.assertEqual(response.data["results"][1]["weight"], "200.00")
 
         #Case 2: Filter by date range to retrieve a single specific entry
         response = self.client.get(self.list_url + "?date_min=2024-10-01&date_max=2024-10-01")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["weight"], "150.00")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["weight"], "150.00")
 
     def test_weight_log_filter_by_weight(self):
         #Create additional entries for filtering
@@ -402,16 +398,16 @@ class WeightTrackerTests(APITestCase):
         response = self.client.get(self.list_url + "?weight_min=100&weight_max=155")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["weight"], "140.00")
-        self.assertEqual(response.data[1]["weight"], "125.00")
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(response.data["results"][0]["weight"], "140.00")
+        self.assertEqual(response.data["results"][1]["weight"], "125.00")
 
         #Case 2: Filter by minimum weight only
         response = self.client.get(self.list_url + "?weight_min=155")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["weight"], "225.00")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["weight"], "225.00")
 
     def test_record_weight_valid(self):
         #Test case: User attempts to record a new valid weight entry
