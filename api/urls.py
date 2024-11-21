@@ -25,8 +25,8 @@ from . import views
 urlpatterns = [
     #Registration/Token paths
     path("api/user/register/"   , CreateUserView.as_view()      , name="register"),
-    path("api/token/"           , TokenObtainPairView.as_view() , name="get_token"),
-    path("api/token/refresh/"   , TokenRefreshView.as_view()    , name="refresh_token"),
+    path("api/token/"           , TokenObtainPairView.as_view() , name="token_obtain_pair"),
+    path("api/token/refresh/"   , TokenRefreshView.as_view()    , name="token_refresh"),
     
     #link all pre-built urls from Django REST Framework
     path("api-auth/", include("rest_framework.urls")),

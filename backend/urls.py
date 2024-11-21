@@ -1,7 +1,6 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from .views import index
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("api.urls")),  # Includes the api app URLs
+    path("", index, name="index"), #path to render the react app
 ]
