@@ -1,12 +1,11 @@
 from decimal import Decimal
-from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout, get_user_model
-from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
+from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
 from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer, WeightTrackerSerializer
@@ -21,25 +20,26 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class    = UserSerializer
     permission_classes  = [AllowAny]
     
-#Login view; authenticate user and allow them to login; 200 for success and 400 for failure
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def login_view(request):
-    username    = request.data.get("username")
-    password    = request.data.get("password")
-    user        = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
-    else:
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        user     = User.objects.get(username=request.data["username"])
+        refresh  = RefreshToken.for_user(user)
+        
+        response.data["refresh"] = str(refresh)
+        response.data["access"]  = str(refresh.access_token)
+        return response
 
 #Logout view; POST view that logs out authenticated users, returning a 200 response for success
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def logout_view(request):
-    logout(request)
-    return Response({"message": "Logout sucessful"}, status=status.HTTP_200_OK)
+    try:
+        refresh_token = request.data["refresh"]
+        token         = RefreshToken(refresh_token)
+        token.blacklist() #Blacklist used tokens
+        return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 #List All Food Items View with Pagination
 class PaginatedFoodListView(generics.ListAPIView):

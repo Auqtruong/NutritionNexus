@@ -32,7 +32,6 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
     
     #Authentication paths
-    path("api/login/"           , views.login_view  , name="login"),
     path("api/logout/"          , views.logout_view , name="logout"),
     
     #Food paths

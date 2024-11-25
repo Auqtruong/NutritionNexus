@@ -55,8 +55,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATIC_URL = '/static/'
 
-
-
 AUTH_USER_MODEL = 'api.User'
 
 #Specify JWT Token Lifetimes
@@ -82,6 +80,7 @@ INSTALLED_APPS = [
     #cors solves issues with different origins trying to hit our backend
     "corsheaders",
     "django_filters",
+    "rest_framework_simplejwt.token_blacklist"
     
 ]
 
