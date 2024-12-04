@@ -5,8 +5,8 @@ import { login } from "../utils/auth.js"
 const Login = () => {
     //track input values for login form
     const [credentials, setCredentials] = useState({ username: "", password: "" });
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
+    const [error, setError]             = useState("");
+    const navigate                      = useNavigate();
 
     const handleChange = (event) => {
         const { name, value } = event.target;

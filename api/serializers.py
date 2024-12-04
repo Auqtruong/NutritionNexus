@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 class FoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
-        fields = ["id", "name"]
+        fields = ["id", "name", "calories", "carbohydrates", "protein", "fat"]
         
 #Serializer for creating new foods
 class FoodCreateSerializer(serializers.ModelSerializer):

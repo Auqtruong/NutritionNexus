@@ -150,9 +150,11 @@ def delete_from_daily_intake(request, pk):
     
 #List Weight Log of Authenticated User
 class WeightLogListView(generics.ListAPIView):
+    queryset            = WeightTracker.objects.all()
     serializer_class    = WeightTrackerSerializer
     filter_backends     = [DjangoFilterBackend]
     filterset_class     = WeightLogFilter
+    pagination_class    = PageNumberPagination
     permission_classes  = [IsAuthenticated]
     
     def get_queryset(self):
