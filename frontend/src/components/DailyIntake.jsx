@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { fetchWithAuth } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
+import FetchDataFromApi from "./FetchDataFromApi";
 
 const DailyIntake = () => {
+    const navigate = useNavigate();
+    
+    const handleFoodClick = (id) => {
+        navigate(`/food/${id}`); //Navigate to FoodDetailPage for the food that was clicked
+    };
+
     const renderDailyIntake = (data) => {
         if (data.length === 0) {
             return <p>No entries found for today.</p>;
@@ -10,7 +16,7 @@ const DailyIntake = () => {
         return (
             <ul>
                 {data.map((item) => ( //iterate over each item in intake array and create unique key based on id
-                    <li key={item.id}>
+                    <li key={item.id} onClick={() => handleFoodClick(item.food_eaten.id)}>
                         <div>
                             <h3>{item.food_eaten.name}</h3>
                             <p><strong>Quantity:</strong> {item.food_quantity}g</p>

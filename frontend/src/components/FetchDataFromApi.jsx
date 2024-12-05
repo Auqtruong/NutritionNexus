@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../utils/auth";
 
 const FetchDataFromApi = ({ endpoint, filters = {}, page = 1, renderData }) => {

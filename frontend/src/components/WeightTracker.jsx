@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import FetchDataFromApi from "./FetchDataFromApi";
 
 const WeightTracker = () => {

@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
 const FoodList = () => {
     //Track current page; initial page set to 1
     const [currentPage, setCurrentPage] = useState(1);
+    const navigate  = useNavigate();
+
+    const handleFoodClick = (id) => {
+        navigate(`/food/${id}`); //Navigate to FoodDetailPage for the food that was clicked
+    };
 
     //Render paginated list of foods
     const renderFoodList = (data) => {
@@ -15,7 +21,7 @@ const FoodList = () => {
             <div>
                 <ul>
                     {data.results.map((food) => ( //Iterate over each item and create unique key based on food id
-                        <li key={food.id}>
+                        <li key={food.id} onClick={() => handleFoodClick(food.id)}>
                             <div>
                                 <h3>{food.name}</h3>
                                 <p><strong>Calories:</strong> {food.calories} kcal</p>
