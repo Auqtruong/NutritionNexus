@@ -1,4 +1,6 @@
 import { fetchWithAuth } from "../utils/auth";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 
 const FoodDetail = () => { 
     const [food, setFood]       = useState(null);

@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.filters import OrderingFilter
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
@@ -45,9 +46,10 @@ def logout_view(request):
 class PaginatedFoodListView(generics.ListAPIView):
     queryset            = Food.objects.all()
     serializer_class    = FoodSerializer
-    filter_backends     = [DjangoFilterBackend]
+    filter_backends     = [DjangoFilterBackend, OrderingFilter]
     filterset_class     = FoodFilter
     pagination_class    = PageNumberPagination
+    ordering_fields     = ["name", "calories", "carbohydrates", "protein", "fat"]
     permission_classes  = [AllowAny]
     
 #Food nutrition/details view; GETs specific food item and its info based on its Primary Key (pk)
@@ -107,8 +109,9 @@ def delete_food(request, pk):
 #List Daily Intake of Authenticated User
 class DailyIntakeListView(generics.ListAPIView):
     serializer_class    = DailyIntakeSerializer
-    filter_backends     = [DjangoFilterBackend]
+    filter_backends     = [DjangoFilterBackend, OrderingFilter]
     filterset_class     = DailyIntakeFilter
+    ordering_fields     = ["food_eaten__calories", "food_entry_date"]
     permission_classes  = [IsAuthenticated]
     
     def get_queryset(self):
@@ -152,9 +155,10 @@ def delete_from_daily_intake(request, pk):
 class WeightLogListView(generics.ListAPIView):
     queryset            = WeightTracker.objects.all()
     serializer_class    = WeightTrackerSerializer
-    filter_backends     = [DjangoFilterBackend]
+    filter_backends     = [DjangoFilterBackend, OrderingFilter]
     filterset_class     = WeightLogFilter
     pagination_class    = PageNumberPagination
+    ordering_fields     = ["weight", "weight_entry_date"]
     permission_classes  = [IsAuthenticated]
     
     def get_queryset(self):
