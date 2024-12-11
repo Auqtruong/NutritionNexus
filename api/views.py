@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.contrib.auth import authenticate, login, logout, get_user_model
-from rest_framework import generics, status
+from rest_framework import status
+from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -16,7 +17,7 @@ from .utils import fetch_nutrition_data
 User = get_user_model()
 
 #User view
-class CreateUserView(generics.CreateAPIView):
+class CreateUserView(CreateAPIView):
     queryset            = User.objects.all()
     serializer_class    = UserSerializer
     permission_classes  = [AllowAny]
@@ -29,6 +30,24 @@ class CreateUserView(generics.CreateAPIView):
         response.data["refresh"] = str(refresh)
         response.data["access"]  = str(refresh.access_token)
         return response
+    
+#Update user view
+class UpdateUserView(UpdateAPIView):
+    queryset            = User.objects.all()
+    serializer_class    = UserSerializer
+    permission_classes  = [IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+    
+#Delete user view
+class DeleteUserView(DestroyAPIView):
+    queryset           = User.objects.all()
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+
 
 #Logout view; POST view that logs out authenticated users, returning a 200 response for success
 @api_view(["POST"])
@@ -43,7 +62,7 @@ def logout_view(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 #List All Food Items View with Pagination
-class PaginatedFoodListView(generics.ListAPIView):
+class PaginatedFoodListView(ListAPIView):
     queryset            = Food.objects.all()
     serializer_class    = FoodSerializer
     filter_backends     = [DjangoFilterBackend, OrderingFilter]
@@ -53,7 +72,7 @@ class PaginatedFoodListView(generics.ListAPIView):
     permission_classes  = [AllowAny]
     
 #Food nutrition/details view; GETs specific food item and its info based on its Primary Key (pk)
-class FoodDetailView(generics.RetrieveAPIView):
+class FoodDetailView(RetrieveAPIView):
     queryset            = Food.objects.all()
     serializer_class    = FoodDetailSerializer
     permission_classes  = [AllowAny]
@@ -107,7 +126,7 @@ def delete_food(request, pk):
         return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
     
 #List Daily Intake of Authenticated User
-class DailyIntakeListView(generics.ListAPIView):
+class DailyIntakeListView(ListAPIView):
     serializer_class    = DailyIntakeSerializer
     filter_backends     = [DjangoFilterBackend, OrderingFilter]
     filterset_class     = DailyIntakeFilter
@@ -152,7 +171,7 @@ def delete_from_daily_intake(request, pk):
         return Response({"error": "Entry not found"}, status=status.HTTP_404_NOT_FOUND)
     
 #List Weight Log of Authenticated User
-class WeightLogListView(generics.ListAPIView):
+class WeightLogListView(ListAPIView):
     queryset            = WeightTracker.objects.all()
     serializer_class    = WeightTrackerSerializer
     filter_backends     = [DjangoFilterBackend, OrderingFilter]

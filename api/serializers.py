@@ -17,6 +17,12 @@ class UserSerializer(serializers.ModelSerializer):
         #user will be created if user data/fields are validated by previous check
         user = User.objects.create_user(**validatedData)
         return user
+    
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 #Serializer for paginated list of foods 
 class FoodSerializer(serializers.ModelSerializer):

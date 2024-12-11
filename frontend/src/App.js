@@ -6,6 +6,7 @@ import DailyIntake from "./components/DailyIntake";
 import FoodDetail from "./components/FoodDetail";
 import FoodList from "./components/FoodList";
 import WeightTracker from "./components/WeightTracker";
+import UserProfile from "./components/UserProfile";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
@@ -64,6 +65,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <WeightTracker />
+                        </ProtectedRoute>
+                    }
+                />
+                {/* User Profile route */}
+                <Route
+                    path="/user-profile"
+                    element={
+                        <ProtectedRoute>
+                            <UserProfile />
                         </ProtectedRoute>
                     }
                 />

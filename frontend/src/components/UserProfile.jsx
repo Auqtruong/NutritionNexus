@@ -24,7 +24,7 @@ const UserProfile = () => {
         if (response.status === 401) {
             alert("Session expired. Please log in again.");
             logout();
-            window.location.href = "/login";
+            window.location.href = "/login"; //navigate user to login page after token expires
             return true; //response was 401 unauthorized
         }
         return false;
