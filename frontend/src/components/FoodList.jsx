@@ -5,7 +5,7 @@ import FetchDataFromApi from "./FetchDataFromApi";
 const FoodList = () => {
     //Track current page; initial page set to 1
     const [currentPage, setCurrentPage] = useState(1);
-    const navigate  = useNavigate();
+    const navigate = useNavigate();
 
     const handleFoodClick = (id) => {
         navigate(`/food/${id}`); //Navigate to FoodDetailPage for the food that was clicked

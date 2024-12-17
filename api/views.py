@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from rest_framework import status
@@ -10,7 +11,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
-from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer, WeightTrackerSerializer
+from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer, WeightTrackerSerializer, DashboardSerializer
 from .models import Food, DailyIntake, WeightTracker
 from .utils import fetch_nutrition_data
 
@@ -134,8 +135,17 @@ class DailyIntakeListView(ListAPIView):
     permission_classes  = [IsAuthenticated]
     
     def get_queryset(self):
+        #Default display shows current date's entries; filters for other previous dates will override
         queryset = DailyIntake.objects.filter(user=self.request.user)
-        return queryset
+        
+        date_min = self.request.query_params.get("date_min")
+        date_max = self.request.query_params.get("date_max")
+        
+        if not date_min and not date_max:
+            today    = date.today()
+            queryset = queryset.filter(food_entry_date=today)
+        return queryset.order_by("-food_entry_date")
+    
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
     
@@ -217,3 +227,14 @@ def delete_weight_entry(request, pk):
         return Response({"message": "Weight entry deleted"}, status=status.HTTP_204_NO_CONTENT)
     except WeightTracker.DoesNotExist:
         return Response({"error": "Weight entry not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+#Dashboard view
+class DashboardView(RetrieveAPIView):
+    serializer_class    = DashboardSerializer
+    permission_classes  = [IsAuthenticated]
+    
+    def get_object(self):
+        return {
+            "request": self.request,
+            "today": date.today()
+        }
