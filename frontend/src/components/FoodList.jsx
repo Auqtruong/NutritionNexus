@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const FoodList = () => {
+const FoodList = ({ searchQuery, sortOptions, filters }) => {
     //Track current page; initial page set to 1
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
@@ -19,19 +19,29 @@ const FoodList = () => {
 
         return (
             <div>
-                <ul>
-                    {data.results.map((food) => ( //Iterate over each item and create unique key based on food id
-                        <li key={food.id} onClick={() => handleFoodClick(food.id)}>
-                            <div>
-                                <h3>{food.name}</h3>
-                                <p><strong>Calories:</strong> {food.calories} kcal</p>
-                                <p><strong>Carbohydrates:</strong> {food.carbohydrates} g</p>
-                                <p><strong>Protein:</strong> {food.protein} g</p>
-                                <p><strong>Fat:</strong> {food.fat} g</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Calories</th>
+                            <th>Carbohydrates</th>
+                            <th>Protein</th>
+                            <th>Fat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.results.map((food) => (
+                            <tr key={food.id} onClick={() => handleFoodClick(food.id)}>
+                                <td>{food.name}</td>
+                                <td>{food.calories} kcal</td>
+                                <td>{food.carbohydrates} g</td>
+                                <td>{food.protein} g</td>
+                                <td>{food.fat} g</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
                 {/* Pagination controls */}
                 <div>
                     <button
@@ -58,6 +68,12 @@ const FoodList = () => {
             <FetchDataFromApi
                 endpoint="/api/foods/"
                 page={currentPage}
+                queryParams={{
+                    search_term: searchQuery || "",
+                    sort_category: sortOptions?.category?.toLowerCase() || "name",
+                    sort_order: sortOptions?.order?.toLowerCase() || "asc",
+                    ...filters,
+                }}
                 renderData={renderFoodList}
             />
         </div>

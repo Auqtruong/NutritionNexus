@@ -12,9 +12,9 @@ const FetchDataFromApi = ({ endpoint, filters = {}, page = 1, renderData }) => {
         const fetchData = async () => {
             try {
                 //Optional filter parameters and pagination if applicable
-                const filterParams  = new URLSearchParams(filters).toString();
-                const pagination    = page ? `?page=${page}` : "";
-                const completeUrl   = `${endpoint}${filterParams ? `?${filterParams}` : ""}${pagination}`;
+                const pagination = page ? `page=${page}` : "";
+                const filterParams = new URLSearchParams({ ...filters, pagination }).toString();
+                const completeUrl = `${endpoint}?${filterParams}`;
 
                 const response = await fetchWithAuth(completeUrl);
                 if (!response.ok) { //unsuccessful fetch

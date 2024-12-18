@@ -37,10 +37,13 @@ class DailyIntakeFilter(django_filters.FilterSet):
     calories_min = django_filters.NumberFilter(field_name="food_eaten__calories", lookup_expr="gte")
     calories_max = django_filters.NumberFilter(field_name="food_eaten__calories", lookup_expr="lte")
     
+    #Partial-match to filter foods by name
+    food_name = django_filters.CharFilter(field_name="food_eaten__name", lookup_expr="icontains")
+    
     #Add Range-match for specific macronutrients?
     class Meta:
         model = DailyIntake
-        fields = ["date_min", "date_max", "calories_min", "calories_max"]
+        fields = ["date_min", "date_max", "calories_min", "calories_max", "food_name"]
     
 class WeightLogFilter(django_filters.FilterSet):
     #Date-Range match to filter weight entries between specific dates

@@ -131,23 +131,19 @@ class DailyIntakeListView(ListAPIView):
     serializer_class    = DailyIntakeSerializer
     filter_backends     = [DjangoFilterBackend, OrderingFilter]
     filterset_class     = DailyIntakeFilter
-    ordering_fields     = ["food_eaten__calories", "food_entry_date"]
+    ordering_fields     = ["calories", "food_entry_date", "food_eaten__name" ]
+    ordering            = ["-food_entry_date"]
     permission_classes  = [IsAuthenticated]
     
     def get_queryset(self):
         #Default display shows current date's entries; filters for other previous dates will override
         queryset = DailyIntake.objects.filter(user=self.request.user)
         
-        date_min = self.request.query_params.get("date_min")
-        date_max = self.request.query_params.get("date_max")
-        
-        if not date_min and not date_max:
+        if not self.request.query_params.get("date_min") and not self.request.query_params.get("date_max"):
             today    = date.today()
             queryset = queryset.filter(food_entry_date=today)
-        return queryset.order_by("-food_entry_date")
-    
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+            
+        return queryset
     
 #Add Food to Daily Intake View; Must be authenticated user; Adds food item to intake based on food id
 @api_view(["POST"])

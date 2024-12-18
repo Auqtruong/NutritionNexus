@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const DailyIntake = () => {
+const DailyIntake = ({ searchQuery, sortOptions }) => {
     const navigate = useNavigate();
-    
+
     const handleFoodClick = (id) => {
         navigate(`/food/${id}`); //Navigate to FoodDetailPage for the food that was clicked
     };
@@ -34,11 +34,16 @@ const DailyIntake = () => {
 
     return (
         <div>
-            <h2>Your Daily Intake</h2>
             {/* Fetch and render daily intake data */}
             <FetchDataFromApi
                 endpoint="/api/intake/"
-                renderData={renderDailyIntake} 
+                queryParams={{
+                    search_term: searchQuery || "",
+                    sort_category: sortOptions?.category?.toLowerCase() || "date",
+                    sort_order: sortOptions?.order?.toLowerCase() || "desc",
+                    ...filters,
+                }}
+                renderData={renderDailyIntake}
             />
         </div>
     );
