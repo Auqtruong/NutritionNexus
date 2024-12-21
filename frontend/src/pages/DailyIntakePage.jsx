@@ -3,11 +3,16 @@ import DailyIntake from "../components/DailyIntake";
 import FilterBar from "../components/FilterBar";
 import SortingDropDown from "../components/SortingDropDown";
 import SearchBar from "../components/SearchBar";
+import FoodSelectionModal from "../components/FoodSelectModal";
 
 const DailyIntakePage = () => {
-    const [filters, setFilters] = useState({});
+    const [filters, setFilters]         = useState({});
     const [sortOptions, setSortOptions] = useState({ category: "date", order: "desc" });
     const [searchQuery, setSearchQuery] = useState(""); //Keep track of search input
+    const [isModalOpen, setIsModalOpen] = useState(false); //Keep track of modal visibility
+
+    const openModal  = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
 
     //Filter Schema
     const filterSchema = [
@@ -52,6 +57,10 @@ const DailyIntakePage = () => {
                 categories={["Food Name", "Calories", "Carbohydrates", "Protein", "Fat", "Date"]}
                 onSortChange={handleSortChange}
             />
+            {/* Add Entry */}
+            <button onClick={openModal}>
+                + Add Entry
+            </button>
 
             {/* Daily intake list */}
             <DailyIntake
@@ -59,6 +68,9 @@ const DailyIntakePage = () => {
                 sortOptions={sortOptions}
                 filters={filters}
             />
+
+            {/* Food Select Modal */}
+            {isModalOpen && <FoodSelectionModal onClose={closeModal} />}
         </div>
     );
 };

@@ -9,26 +9,41 @@ const DailyIntake = ({ searchQuery, sortOptions }) => {
     };
 
     const renderDailyIntake = (data) => {
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             return <p>No entries found for today.</p>;
         }
 
         return (
-            <ul>
-                {data.map((item) => ( //iterate over each item in intake array and create unique key based on id
-                    <li key={item.id} onClick={() => handleFoodClick(item.food_eaten.id)}>
-                        <div>
-                            <h3>{item.food_eaten.name}</h3>
-                            <p><strong>Quantity:</strong> {item.food_quantity}g</p>
-                            <p><strong>Date:</strong> {item.food_entry_date}</p>
-                            <p><strong>Calories:</strong> {item.calories} kcal</p>
-                            <p><strong>Carbohydrates:</strong> {item.carbohydrates} g</p>
-                            <p><strong>Protein:</strong> {item.protein} g</p>
-                            <p><strong>Fat:</strong> {item.fat} g</p>
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            <table className="daily-intake-table">
+                <thead>
+                    <tr>
+                        <th>Food Name</th>
+                        <th>Quantity (g)</th>
+                        <th>Date</th>
+                        <th>Calories (kcal)</th>
+                        <th>Carbohydrates (g)</th>
+                        <th>Protein (g)</th>
+                        <th>Fat (g)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map((item) => ( //iterate over every entry and create a row
+                        <tr
+                            key={item.id}
+                            onClick={() => handleFoodClick(item.food_eaten.id)}
+                            style={{ cursor: "pointer" }}
+                        >
+                            <td>{item.food_eaten.name}</td>
+                            <td>{item.food_quantity}</td>
+                            <td>{new Date(item.food_entry_date).toLocaleDateString()}</td>
+                            <td>{item.calories}</td>
+                            <td>{item.carbohydrates}</td>
+                            <td>{item.protein}</td>
+                            <td>{item.fat}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         );
     };
 

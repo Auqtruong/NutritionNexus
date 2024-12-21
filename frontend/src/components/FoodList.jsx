@@ -13,7 +13,7 @@ const FoodList = ({ searchQuery, sortOptions, filters }) => {
 
     //Render paginated list of foods
     const renderFoodList = (data) => {
-        if (data.results.length === 0) {
+        if (!data.results || data.results.length === 0) {
             return <p>No food items found.</p>;
         }
 
@@ -46,13 +46,13 @@ const FoodList = ({ searchQuery, sortOptions, filters }) => {
                 <div>
                     <button
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={!data.previous} // Disable if no previous page exists
+                        disabled={!data.previous} //Disable if no previous page exists
                     >
                         Previous
                     </button>
                     <button
                         onClick={() => setCurrentPage((prev) => prev + 1)}
-                        disabled={!data.next} // Disable if no next page exists
+                        disabled={!data.next} //Disable if no next page exists
                     >
                         Next
                     </button>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { categoryMap } from "../utils/categoryMap";
 
 //utility component for generic/dynamic filtering across different pages with different categories
 const FilterBar = ({ filters, onFilterChange }) => {
@@ -9,7 +10,8 @@ const FilterBar = ({ filters, onFilterChange }) => {
         }, {})
     );
 
-    const handleInputChange = (key, value) => {
+    const handleInputChange = (label, value) => {
+        const key = categoryMap[label] || label; //use original key if no mapping exists
         const updatedFilters = { ...filterValues, [key]: value }; //only update changed filters
         setFilterValues(updatedFilters); //update filter state with incoming values
         onFilterChange(updatedFilters); 
@@ -23,7 +25,7 @@ const FilterBar = ({ filters, onFilterChange }) => {
                     <input
                         type={filter.type}
                         value={filterValues[filter.key]}
-                        onChange={(e) => handleInputChange(filter.key, e.target.value)}
+                        onChange={(event) => handleInputChange(filter.label, event.target.value)}
                         placeholder={filter.placeholder || ""}
                     />
                 </label>

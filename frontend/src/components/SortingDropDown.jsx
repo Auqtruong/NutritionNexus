@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { categoryMap } from "../utils/categoryMap";
 
 const SortingDropDown = ({ categories, onSortChange }) => {
     const [sortCategory, setSortCategory] = useState(""); //track category to sort by
@@ -8,7 +9,8 @@ const SortingDropDown = ({ categories, onSortChange }) => {
 
     const handleSort = () => {
         if (sortCategory && sortOrder) {
-            onSortChange({ category: sortCategory, order: sortOrder }); //pass chosen sorting options back to main function
+            const apiCategory = categoryMap[sortCategory];
+            onSortChange({ category: apiCategory, order: sortOrder }); //pass chosen sorting options back to main function
         }
     };
 
