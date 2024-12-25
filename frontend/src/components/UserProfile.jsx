@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { logout } from "../utils/auth";
+import { fetchWithAuth, logout } from "../utils/auth";
 
 const UserProfile = () => {
     const [userData, setUserData] = useState({ username: "", weight: "" }); //fetched data
@@ -40,13 +40,8 @@ const UserProfile = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("/api/user/profile/", {
-                    method: "GET",
-                    headers: {
-                        "Content-type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                });
+                const response = await fetchWithAuth("/api/user/profile/");
+
                 if (handleUnauthorized(response)) return;
 
                 if (response.ok) { //data successfully fetched
@@ -74,14 +69,14 @@ const UserProfile = () => {
         }
 
         try {
-            const response = await fetch("/api/user/update/", {
+            const response = await fetchWithAuth("/api/user/update/", {
                 method: "PUT",
                 headers: {
                     "Content-type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: JSON.stringify(formData),
             });
+
             if (handleUnauthorized(response)) return;
 
             if (response.ok) {
@@ -108,11 +103,10 @@ const UserProfile = () => {
         }
 
         try {
-            const response = await fetch("/api/user/delete/", {
+            const response = await fetchWithAuth("/api/user/delete/", {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: JSON.stringify({ password: deletePass }),
             });

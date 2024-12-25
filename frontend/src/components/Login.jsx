@@ -19,7 +19,7 @@ const Login = () => {
             await login(credentials); //call login function from auth.js
             navigate("/daily-intake"); //Redirect to User's Daily Intake page
         }
-        catch (err) {
+        catch (error) {
             setError("Invalid credentials. Please try again.");
         }
     };

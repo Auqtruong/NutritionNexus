@@ -11,8 +11,13 @@ const DailyIntakePage = () => {
     const [searchQuery, setSearchQuery] = useState(""); //Keep track of search input
     const [isModalOpen, setIsModalOpen] = useState(false); //Keep track of modal visibility
 
-    const openModal  = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
+    const handleOpenModal  = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
 
     //Filter Schema
     const filterSchema = [
@@ -58,7 +63,7 @@ const DailyIntakePage = () => {
                 onSortChange={handleSortChange}
             />
             {/* Add Entry */}
-            <button onClick={openModal}>
+            <button onClick={handleOpenModal}>
                 + Add Entry
             </button>
 
@@ -70,7 +75,7 @@ const DailyIntakePage = () => {
             />
 
             {/* Food Select Modal */}
-            {isModalOpen && <FoodSelectionModal onClose={closeModal} />}
+            {isModalOpen && <FoodSelectionModal onClose={handleCloseModal} />}
         </div>
     );
 };

@@ -44,8 +44,8 @@ const Register = () => {
             setError("");
             setTimeout(() => navigate("/login"), 2500); //redirect user to login page after successful registration
         }
-        catch (err) {
-            setError(err.message);
+        catch (error) {
+            setError(error.message);
         }
     };
     return (

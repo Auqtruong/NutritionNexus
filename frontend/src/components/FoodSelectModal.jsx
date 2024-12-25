@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { fetchWithAuth } from "../utils/auth";
 
 const FoodSelectionModal = ({ onClose }) => {
     const [foodList, setFoodList] = useState([]); //holds list of food items from food list
@@ -10,11 +11,7 @@ const FoodSelectionModal = ({ onClose }) => {
     useEffect(() => {
         const fetchFoodList = async () => {
             try {
-                const response = await fetch("/api/foods/", {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                    },
-                });
+                const response = await fetchWithAuth("/api/foods/");
                 if (response.ok) { //Food list successfully fetched
                     const data = await response.json();
                     setFoodList(data.results);
@@ -35,11 +32,10 @@ const FoodSelectionModal = ({ onClose }) => {
         }
 
         try {
-            const response = await fetch("/api/intake/add/", {
+            const response = await fetchWithAuth("/api/intake/add/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ food_id: selectedFoodId, food_quantity: quantity }), //Default quantity is 100g
             });

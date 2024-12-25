@@ -102,14 +102,22 @@ def add_food(request):
         food_name       = serializer.validated_data.get("name")
         nutrition_data  = fetch_nutrition_data(food_name)
         
-        if nutrition_data:
-            food = serializer.save(
-                calories        = nutrition_data["calories"],
-                carbohydrates   = nutrition_data["carbohydrates"],
-                protein         = nutrition_data["protein"],
-                fat             = nutrition_data["fat"]
-            )
-            return Response({"message": "Food item created successfully", "id": food.id}, status=status.HTTP_201_CREATED)
+        if nutrition_data and "items" in nutrition_data:
+            saved_foods = []
+            for item in nutrition_data["items"]:
+                try:
+                    food = Food.objects.create(
+                        name=item["name"],
+                        calories=item["calories"],
+                        carbohydrates=item["carbohydrates_total_g"],
+                        protein=item["protein_g"],
+                        fat=item["fat_total_g"],
+                        user=request.user
+                    )
+                    saved_foods.append(food.name)
+                except Exception as e:
+                    continue #Put errors here specific to saving foods
+            return Response({"message": "Food items added successfully", "foods": saved_foods}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": "Failed to fetch nutrition data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         

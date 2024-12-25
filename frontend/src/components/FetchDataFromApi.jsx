@@ -23,8 +23,8 @@ const FetchDataFromApi = ({ endpoint, filters = {}, page = 1, renderData }) => {
                 const result = await response.json();
                 setData(result); //update state with fetched data
             }
-            catch (err) {
-                setError(err.message); //update state with error message if unsuccessful
+            catch (error) {
+                setError(error.message); //update state with error message if unsuccessful
             }
             finally {
                 setLoading(false); //data is no longer being loaded regardless of success or failure

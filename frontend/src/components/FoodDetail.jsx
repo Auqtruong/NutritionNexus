@@ -18,8 +18,8 @@ const FoodDetail = () => {
                 const data = await response.json();
                 setFood(data); //update food details with fetched data
             }
-            catch (err) {
-                setError(err.message); //update state with error message if unsuccessful
+            catch (error) {
+                setError(error.message); //update state with error message if unsuccessful
             }
             finally {
                 setLoading(false); //data is no longer being loaded regardless of success or failure

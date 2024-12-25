@@ -76,7 +76,7 @@ export const fetchWithAuth = async (url, options = {}) => {
         return response; //return original attempt if initially successful
     }
 
-    catch (err) {
+    catch (error) {
         throw new Error("Failed to make authenticated request")
     }
 };

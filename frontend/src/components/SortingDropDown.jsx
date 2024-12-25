@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { categoryMap } from "../utils/categoryMap";
+import { mapCategory } from "../utils/constants";
+import PropTypes from "prop-types";
 
 const SortingDropDown = ({ categories, onSortChange }) => {
     const [sortCategory, setSortCategory] = useState(""); //track category to sort by
@@ -9,7 +10,7 @@ const SortingDropDown = ({ categories, onSortChange }) => {
 
     const handleSort = () => {
         if (sortCategory && sortOrder) {
-            const apiCategory = categoryMap[sortCategory];
+            const apiCategory = mapCategory[sortCategory];
             onSortChange({ category: apiCategory, order: sortOrder }); //pass chosen sorting options back to main function
         }
     };
@@ -24,7 +25,7 @@ const SortingDropDown = ({ categories, onSortChange }) => {
                 {/* default option */}
                 <option value="">Select Category</option>
                 {categories.map((category) => ( //create a category for each option
-                    <option key={category} value={category.toLowerCase()}>
+                    <option key={category} value={category}>
                         {category}
                     </option>
                 ))}
@@ -48,6 +49,18 @@ const SortingDropDown = ({ categories, onSortChange }) => {
             </button>
         </div>
     );
+};
+
+//validate prop types
+SortingDropDown.propTypes = {
+    categories: PropTypes.arrayOf(PropTypes.string), 
+    onSortChange: PropTypes.func,
+};
+
+//default values if props are not explicitly passed to component
+SortingDropDown.defaultProps = {
+    categories: ["Food Name", "Calories", "Carbohydrates", "Protein", "Fat", "Date"],
+    onSortChange: () => {},
 };
 
 export default SortingDropDown;

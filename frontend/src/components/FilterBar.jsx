@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { categoryMap } from "../utils/categoryMap";
+import { mapCategory } from "../utils/constants";
+import PropTypes from "prop-types";
 
 //utility component for generic/dynamic filtering across different pages with different categories
 const FilterBar = ({ filters, onFilterChange }) => {
@@ -11,10 +12,10 @@ const FilterBar = ({ filters, onFilterChange }) => {
     );
 
     const handleInputChange = (label, value) => {
-        const key = categoryMap[label] || label; //use original key if no mapping exists
+        const key = mapCategory(label);
         const updatedFilters = { ...filterValues, [key]: value }; //only update changed filters
         setFilterValues(updatedFilters); //update filter state with incoming values
-        onFilterChange(updatedFilters); 
+        onFilterChange(updatedFilters);
     };
 
     return (
@@ -32,6 +33,25 @@ const FilterBar = ({ filters, onFilterChange }) => {
             ))}
         </div>
     );
+};
+
+//validate prop types
+FilterBar.propTypes = {
+    filters: PropTypes.arrayOf(
+        PropTypes.shape({
+            key: PropTypes.string.isRequired,
+            label: PropTypes.string.isRequired,
+            type: PropTypes.string.isRequired,
+            placeholder: PropTypes.string,
+        })
+    ),
+    onFilterChange: PropTypes.func,
+};
+
+//default values if props are not explicitly passed to component
+FilterBar.defaultProps = {
+    filters: [],
+    onFilterChange: () => { },
 };
 
 export default FilterBar;
