@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from "1act-router-dom";
-import Login from "./components/Login";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import DailyIntakePage from "./pages/DailyIntakePage";
+import FoodListPage from "./pages/FoodListPage";
+import FoodDetailPage from "./pages/FoodDetailPage";
+import WeightTrackerPage from "./pages/WeightTrackerPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import Logout from "./components/Logout";
 import ProtectedRoute from "./components/ProtectedRoute";
-import DailyIntake from "./components/DailyIntake";
-import FoodDetail from "./components/FoodDetail";
-import FoodList from "./components/FoodList";
-import WeightTracker from "./components/WeightTracker";
-import UserProfile from "./components/UserProfile";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
@@ -14,13 +15,22 @@ function App() {
         <Router>
             <Routes>
                 {/* Path for undefined routes */}
-                <Route path="*" element={<div>Page Not Found</div>} />
+                <Route 
+                    path="*" 
+                    element={<div>Page Not Found</div>} 
+                />
+                
+                {/* Register route */}
+                <Route 
+                    path="/register" 
+                    element={<RegisterPage />} 
+                />
 
                 {/* Login route; route to daily intake if already logged in */}
                 <Route
                     path="/login"
                     element={
-                        isAuthenticated() ? (<Navigate to="/daily-intake" />) : (<Login />)
+                        isAuthenticated() ? (<Navigate to="/daily-intake" />) : (<LoginPage />)
                     }
                 />
                 {/* Logout route */}
@@ -37,7 +47,7 @@ function App() {
                     path="/daily-intake"
                     element={
                         <ProtectedRoute>
-                            <DailyIntake />
+                            <DailyIntakePage />
                         </ProtectedRoute>
                     }
                 />
@@ -46,7 +56,7 @@ function App() {
                     path="/food-list"
                     element={
                         <ProtectedRoute>
-                            <FoodList />
+                            <FoodListPage />
                         </ProtectedRoute>
                     }
                 />
@@ -55,7 +65,7 @@ function App() {
                     path="/food/:foodId"
                     element={
                         <ProtectedRoute>
-                            <FoodDetail />
+                            <FoodDetailPage />
                         </ProtectedRoute>
                     }
                 />
@@ -64,7 +74,7 @@ function App() {
                     path="/weight-tracker"
                     element={
                         <ProtectedRoute>
-                            <WeightTracker />
+                            <WeightTrackerPage />
                         </ProtectedRoute>
                     }
                 />
@@ -73,7 +83,7 @@ function App() {
                     path="/user-profile"
                     element={
                         <ProtectedRoute>
-                            <UserProfile />
+                            <UserProfilePage />
                         </ProtectedRoute>
                     }
                 />

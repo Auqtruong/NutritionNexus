@@ -14,7 +14,8 @@ const SearchBar = ({ onSearch }) => {
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)} 
+                onChange={(event) => setSearchTerm(event.target.value)}
+                aria-label="Search"
             />
             <button type="submit">Search</button>
         </form>

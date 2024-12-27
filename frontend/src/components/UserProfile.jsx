@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { fetchWithAuth, logout } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 const UserProfile = () => {
-    const [userData, setUserData] = useState({ username: "", weight: "" }); //fetched data
-    const [isEditing, setIsEditing] = useState(false); //display profile vs. form
-    const [formData, setFormData] = useState({ username: "", password: "" }); //keep track of edits
-    const [showDelete, setShowDelete] = useState(false);
-    const [deletePass, setDeletePass] = useState(""); //track password being entered for account deletion
-    const [loading, setLoading] = useState(true);
+    const [userData, setUserData]       = useState({ username: "", weight: "" }); //fetched data
+    const [isEditing, setIsEditing]     = useState(false); //display profile vs. form
+    const [formData, setFormData]       = useState({ username: "", password: "" }); //keep track of edits
+    const [showDelete, setShowDelete]   = useState(false);
+    const [deletePass, setDeletePass]   = useState(""); //track password being entered for account deletion
+    const [loading, setLoading]         = useState(true);
+
+    const navigate = useNavigate();
 
     //form validation before updating/deleting
     const validateForm = (fields) => {
@@ -24,7 +27,7 @@ const UserProfile = () => {
         if (response.status === 401) {
             alert("Session expired. Please log in again.");
             logout();
-            window.location.href = "/login"; //navigate user to login page after token expires
+            navigate("/login");
             return true; //response was 401 unauthorized
         }
         return false;
@@ -110,12 +113,13 @@ const UserProfile = () => {
                 },
                 body: JSON.stringify({ password: deletePass }),
             });
+
             if (handleUnauthorized(response)) return;
 
             if (response.ok) { //account successfully deleted
                 alert("Account deleted successfully!");
                 localStorage.removeItem("token");
-                window.location.href = "/register"; //refresh and navigate user to registration page after their account is deleted
+                navigate("/register"); //navigate user to registration page after their account is deleted
             }
             else {
                 const data = await response.json();

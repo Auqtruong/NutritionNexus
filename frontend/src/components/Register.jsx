@@ -50,7 +50,7 @@ const Register = () => {
     };
     return (
         <div>
-            <h2>Register</h2>
+            <h2>Create Account</h2>
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -58,6 +58,7 @@ const Register = () => {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Enter username"
+                    aria-label="Username"
                     required
                 />
                 <input
@@ -66,6 +67,7 @@ const Register = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter password"
+                    aria-label="Password"
                     required
                 />
                 <input
@@ -74,9 +76,10 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm password"
+                    aria-label="Confirm password"
                     required
                 />
-                <button type="submit">Register</button>
+                <button type="submit">Sign Up</button>
             </form>
             {/* Success and error color highlighting for user; redirect them to login page after */}
             {error && <p style={{ color: "red" }}>{error}</p>}

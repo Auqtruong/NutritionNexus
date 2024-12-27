@@ -34,6 +34,7 @@ const Login = () => {
                     value={credentials.username}
                     onChange={handleChange}
                     placeholder="Enter username"
+                    aria-label="Username"
                     required
                 />
                 <input
@@ -42,6 +43,7 @@ const Login = () => {
                     value={credentials.password}
                     onChange={handleChange}
                     placeholder="Enter password"
+                    aria-label="Password"
                     required
                 />
                 <button type="submit">Login</button>

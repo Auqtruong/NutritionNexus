@@ -35,9 +35,29 @@ export const refreshAccessToken = async () => {
 };
 
 //logout; clear from local storage
-export const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+export const logout = async () => {
+    try {
+        const refresh_token = localStorage.getItem("refresh_token");
+        if (refresh_token) {
+            const response = await fetch("/api/logout/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ refresh: refresh_token }),
+            });
+
+            if (!response.ok) {
+                console.error("Failed to logout on the server:", response.status, response.statusText);
+            }
+        }
+    } catch (error) {
+        console.error("Error during logout:", error);
+    } finally {
+        //clear local storage tokens regardless of API success
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+    }
 };
 
 //auth check; check if access token exists in local storage
