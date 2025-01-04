@@ -1,57 +1,37 @@
 import { useState } from "react";
-import { mapCategory } from "../utils/constants";
 import PropTypes from "prop-types";
 
 //utility component for generic/dynamic filtering across different pages with different categories
-const FilterBar = ({ filters, onFilterChange }) => {
-    const [filterValues, setFilterValues] = useState(() =>
-        filters.reduce((aggregator, filter) => {
-            aggregator[filter.key] = ""; //initialize all filters with empty values
-            return aggregator;
-        }, {})
-    );
+const FilterBar = ({ onSubmit }) => {
+    const [input, setInput] = useState("");
 
-    const handleInputChange = (label, value) => {
-        const key = mapCategory(label);
-        const updatedFilters = { ...filterValues, [key]: value }; //only update changed filters
-        setFilterValues(updatedFilters); //update filter state with incoming values
-        onFilterChange(updatedFilters);
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        if (onSubmit) {
+            onSubmit(input.trim());
+        }
     };
 
     return (
-        <div className="filter-bar">
-            {filters.map((filter) => ( //loop through filter array and create input fields for each
-                <label key={filter.key}>
-                    {filter.label}
-                    <input
-                        type={filter.type}
-                        value={filterValues[filter.key]}
-                        onChange={(event) => handleInputChange(filter.label, event.target.value)}
-                        placeholder={filter.placeholder || ""}
-                    />
-                </label>
-            ))}
-        </div>
+        <form
+            onSubmit={handleSubmit}
+        >
+            <input
+                type="text"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Filter entries (e.g name:chicken, calories>100)"
+            />
+            <button type="submit">
+                Apply
+            </button>
+        </form>
     );
 };
 
 //validate prop types
 FilterBar.propTypes = {
-    filters: PropTypes.arrayOf(
-        PropTypes.shape({
-            key: PropTypes.string.isRequired,
-            label: PropTypes.string.isRequired,
-            type: PropTypes.string.isRequired,
-            placeholder: PropTypes.string,
-        })
-    ),
-    onFilterChange: PropTypes.func,
-};
-
-//default values if props are not explicitly passed to component
-FilterBar.defaultProps = {
-    filters: [],
-    onFilterChange: () => { },
+    onSubmit: PropTypes.func.isRequired
 };
 
 export default FilterBar;

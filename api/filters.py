@@ -1,59 +1,75 @@
 import django_filters
+from django.core.exceptions import ValidationError
 from .models import Food, DailyIntake, WeightTracker
 
-class FoodFilter(django_filters.FilterSet):
-    #Partial-match for food name (Ap will get Grape, Apple, etc)
-    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
-    
-    #Exact-match for food calories (Cal = 200)
-    calories = django_filters.NumberFilter(field_name="calories")
-    
-    #Range-match for food calories (Filter for foods between min and max calories)
-    calories_min = django_filters.NumberFilter(field_name="calories", lookup_expr="gte")
-    calories_max = django_filters.NumberFilter(field_name="calories", lookup_expr="lte")
-    
-    #Range-match for protein (Filter for foods between min and max grams of protein)
-    protein_min = django_filters.NumberFilter(field_name="protein", lookup_expr="gte")
-    protein_max = django_filters.NumberFilter(field_name="protein", lookup_expr="lte")
+class DynamicFilterSet(django_filters.FilterSet):
+    #Base filterset that dynamically applies filters based on the query parameters passed to backend
+    def __init__(self, data=None, queryset=None, *, request=None, prefix=None):
+        if request and request.GET:
+            parsed_filters = self.parse_query_string(request.GET.urlencode())
+            if data:
+                data = {**data, **parsed_filters}
+            else:
+                data = parsed_filters
+        super().__init__(data, queryset=queryset, request=request, prefix=prefix)
+    @staticmethod
+    def parse_query_string(query_string):
+        """
+        Parse query string into dictionary of field: {operator, value}
+        Example Input: "food_name:chicken,calories>100"
+        Example Output: {
+            "food_name": "chicken",
+            "calories__gt: 100
+        }
+        """
+        filters = {}
+        for filter in query_string.split(","):
+            if ":" in filter:
+                field, value = filter.split(":", 1)
+                filters[field] = value
+            elif ">=" in filter:
+                field, value = filter.split(">=", 1)
+                filters[f"{field}__gte"] = value
+            elif "<=" in filter:
+                field, value = filter.split("<=", 1)
+                filters[f"{field}__lte"] = value
+            elif ">" in filter:
+                field, value = filter.split(">", 1)
+                filters[f"{field}__gt"] = value
+            elif "<" in filter:
+                field, value = filter.split("<", 1)
+                filters[f"{field}__lt"] = value
+            elif "=" in filter:
+                field, value = filter.split("=", 1)
+                filters[field] = value
+            else:
+                raise ValidationError(f"Invalid filter: {filter}")
+        return filters
 
-    #Range-match for fat (Filter for foods between min and max grams of fat)
-    fat_min = django_filters.NumberFilter(field_name="fat", lookup_expr="gte")
-    fat_max = django_filters.NumberFilter(field_name="fat", lookup_expr="lte")
-
-    #Range-match for carbohydrates (Filter for foods between min and max grams of carbs)
-    carbs_min = django_filters.NumberFilter(field_name="carbohydrates", lookup_expr="gte")
-    carbs_max = django_filters.NumberFilter(field_name="carbohydrates", lookup_expr="lte")
-
+class FoodFilter(DynamicFilterSet):
     class Meta:
         model = Food
-        fields = ["name", "calories", "calories_min", "calories_max", "protein_min", "protein_max", "fat_min", "fat_max", "carbs_min", "carbs_max"]
+        fields = {
+            "name": ["icontains"],
+            "calories": ["exact", "gte", "lte"],
+            "protein": ["gte", "lte"],
+            "carbohydrates": ["gte", "lte"],
+            "fat": ["gte", "lte"],
+        }
         
-class DailyIntakeFilter(django_filters.FilterSet):
-    #Date-Range match to filter food entries between specific dates
-    date_min = django_filters.DateFilter(field_name="food_entry_date", lookup_expr="gte")
-    date_max = django_filters.DateFilter(field_name="food_entry_date", lookup_expr="lte")
-    
-    #Range-match to filter foods eaten between a certain range of calories
-    calories_min = django_filters.NumberFilter(field_name="food_eaten__calories", lookup_expr="gte")
-    calories_max = django_filters.NumberFilter(field_name="food_eaten__calories", lookup_expr="lte")
-    
-    #Partial-match to filter foods by name
-    food_name = django_filters.CharFilter(field_name="food_eaten__name", lookup_expr="icontains")
-    
-    #Add Range-match for specific macronutrients?
+class DailyIntakeFilter(DynamicFilterSet):
     class Meta:
         model = DailyIntake
-        fields = ["date_min", "date_max", "calories_min", "calories_max", "food_name"]
-    
-class WeightLogFilter(django_filters.FilterSet):
-    #Date-Range match to filter weight entries between specific dates
-    date_min = django_filters.DateFilter(field_name="weight_entry_date", lookup_expr="gte")
-    date_max = django_filters.DateFilter(field_name="weight_entry_date", lookup_expr="lte")
-    
-    #Range-match to filter weight entries between a certain range of weights
-    weight_min = django_filters.NumberFilter(field_name="weight", lookup_expr="gte")
-    weight_max = django_filters.NumberFilter(field_name="weight", lookup_expr="lte")
-    
+        fields = {
+            "food_eaten__name": ["icontains"],
+            "food_eaten__calories": ["gte", "lte"],
+            "food_entry_date": ["exact", "gte", "lte"],
+        }
+        
+class WeightLogFilter(DynamicFilterSet):
     class Meta:
         model = WeightTracker
-        fields = ["date_min", "date_max", "weight_min", "weight_max"]
+        fields = {
+            "weight": ["exact", "gte", "lte"],
+            "weight_entry_date": ["exact", "gte", "lte"]
+        }

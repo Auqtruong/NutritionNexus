@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import CreateUserView, UpdateUserView, DeleteUserView, DailyIntakeListView, FoodDetailView, PaginatedFoodListView, WeightLogListView, get_nutrition_data, DashboardView
 from . import views
 
+#API Endpoints
 urlpatterns = [
     #link all pre-built urls from Django REST Framework
     path("api-auth/"                    , include("rest_framework.urls")),
@@ -26,7 +27,7 @@ urlpatterns = [
     path("api/foods/"                   , PaginatedFoodListView.as_view()   , name="list_food_items"),
     path("api/foods/<int:pk>/"          , FoodDetailView.as_view()          , name="food_detail"),
     path("api/foods/add/"               , views.add_food                    , name="add_food"),
-    path("api/foods/delete/<int:pk>/"   , views.delete_food                 , name="delete_food"),
+    path("api/foods/delete/"            , views.delete_food                 , name="delete_food"),
     path("api/nutrition/"               , get_nutrition_data                , name="get_nutrition_data"),
     
     #Daily Intake paths

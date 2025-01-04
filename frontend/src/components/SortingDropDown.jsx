@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { mapCategory } from "../utils/constants";
 import PropTypes from "prop-types";
 
 const SortingDropDown = ({ categories, onSortChange }) => {
@@ -10,8 +9,7 @@ const SortingDropDown = ({ categories, onSortChange }) => {
 
     const handleSort = () => {
         if (sortCategory && sortOrder) {
-            const apiCategory = mapCategory[sortCategory];
-            onSortChange({ category: apiCategory, order: sortOrder }); //pass chosen sorting options back to main function
+            onSortChange({ category: sortCategory, order: sortOrder }); //pass chosen sorting options back to main function
         }
     };
 
@@ -59,7 +57,18 @@ SortingDropDown.propTypes = {
 
 //default values if props are not explicitly passed to component
 SortingDropDown.defaultProps = {
-    categories: ["Food Name", "Calories", "Carbohydrates", "Protein", "Fat", "Date"],
+    categories: [
+        "name",                   //Food name
+        "calories",               //Food calories
+        "protein",                //Food protein
+        "carbohydrates",          //Food carbohydrates
+        "fat",                    //Food fat
+        "food_eaten__name",       //Daily intake food name
+        "food_eaten__calories",   //Daily intake food calories
+        "food_entry_date",        //Daily intake entry date
+        "weight",                 //Weight tracker weight
+        "weight_entry_date",      //Weight tracker entry date
+    ],
     onSortChange: () => {},
 };
 

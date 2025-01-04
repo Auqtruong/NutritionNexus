@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const FoodList = ({ searchQuery, sortOptions, filters }) => {
+const FoodList = ({ sortOptions, filters, onCheckboxChange }) => {
     //Track current page; initial page set to 1
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
@@ -22,6 +22,18 @@ const FoodList = ({ searchQuery, sortOptions, filters }) => {
                 <table>
                     <thead>
                         <tr>
+                            <th>
+                                <input
+                                    type="checkbox"
+                                    onChange={(event) =>
+                                        onCheckboxChange(
+                                            event.target.checked,
+                                            "all",
+                                            data.results.map((food) => food.id)
+                                        )
+                                    }
+                                />
+                            </th>
                             <th>Name</th>
                             <th>Calories</th>
                             <th>Carbohydrates</th>
@@ -31,8 +43,22 @@ const FoodList = ({ searchQuery, sortOptions, filters }) => {
                     </thead>
                     <tbody>
                         {data.results.map((food) => (
-                            <tr key={food.id} onClick={() => handleFoodClick(food.id)}>
-                                <td>{food.name}</td>
+                            <tr key={food.id}>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        onChange={(event) =>
+                                            onCheckboxChange(
+                                                event.target.checked,
+                                                food.id
+                                            )
+                                        }
+                                    />
+                                </td>
+                                {/* navigate to FoodDetailpage for food item on click */}
+                                <td onClick={() => handleFoodClick(food.id)}>
+                                    {food.name}
+                                </td>
                                 <td>{food.calories} kcal</td>
                                 <td>{food.carbohydrates} g</td>
                                 <td>{food.protein} g</td>
@@ -69,10 +95,9 @@ const FoodList = ({ searchQuery, sortOptions, filters }) => {
                 endpoint="/api/foods/"
                 page={currentPage}
                 queryParams={{
-                    search_term: searchQuery || "",
                     sort_category: sortOptions?.category?.toLowerCase() || "name",
                     sort_order: sortOptions?.order?.toLowerCase() || "asc",
-                    ...filters,
+                    ...filters, //pass filters to backend for processing
                 }}
                 renderData={renderFoodList}
             />

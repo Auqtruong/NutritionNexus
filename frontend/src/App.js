@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "1act-router-dom";
+import { BrowserRouter as Router, Routes, Router, Navigate } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import DailyIntakePage from "./pages/DailyIntakePage";
@@ -18,6 +18,12 @@ function App() {
                 <Route 
                     path="*" 
                     element={<div>Page Not Found</div>} 
+                />
+
+                {/* Redirect default route/landing page ("/") to login route */}
+                <Route 
+                    path="/" 
+                    element={<Navigate to="/login" />} 
                 />
                 
                 {/* Register route */}

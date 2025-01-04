@@ -2,8 +2,7 @@ import { useState } from "react";
 import DailyIntake from "../components/DailyIntake";
 import FilterBar from "../components/FilterBar";
 import SortingDropDown from "../components/SortingDropDown";
-import SearchBar from "../components/SearchBar";
-import FoodSelectionModal from "../components/FoodSelectModal";
+import FoodSelectModal from "../components/FoodSelectModal";
 
 const DailyIntakePage = () => {
     const [filters, setFilters]         = useState({});
@@ -51,9 +50,6 @@ const DailyIntakePage = () => {
         <div className="daily-intake-page">
             <h1>Your Daily Intake</h1>
 
-            {/* Search Bar */}
-            <SearchBar onSearch={handleSearch} />
-
             {/* Filters */}
             <FilterBar filters={filterSchema} onFilterChange={handleFiltersChange} />
 
@@ -75,7 +71,7 @@ const DailyIntakePage = () => {
             />
 
             {/* Food Select Modal */}
-            {isModalOpen && <FoodSelectionModal onClose={handleCloseModal} />}
+            {isModalOpen && <FoodSelecctModal onClose={handleCloseModal} />}
         </div>
     );
 };

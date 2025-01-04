@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../utils/auth";
 
-const FoodSelectionModal = ({ onClose }) => {
+const FoodSelectModal = ({ onClose }) => {
     const [foodList, setFoodList] = useState([]); //holds list of food items from food list
     const [searchQuery, setSearchQuery] = useState(""); //track search bar value
     const [selectedFoodId, setSelectedFoodId] = useState(null); //track food id of selected food item to add
@@ -105,4 +105,4 @@ const FoodSelectionModal = ({ onClose }) => {
     );
 };
 
-export default FoodSelectionModal;
+export default FoodSelectModal;

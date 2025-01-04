@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { fetchWithAuth } from "../utils/auth";
 
-const AddFoodModal = ({ isOpen, onClose, onFoodsAdded }) => {
+const AddFoodModal = ({ isOpen, onClose }) => {
     const [searchQuery, setSearchQuery]     = useState(""); //track search bar value
     const [searchResults, setSearchResults] = useState([]); //holds list of food items returned from /api/nutrition
     const [selectedFoods, setSelectedFoods] = useState([]); //track foods user selected to add/save
@@ -54,9 +54,8 @@ const AddFoodModal = ({ isOpen, onClose, onFoodsAdded }) => {
             });
 
             if (response.ok) { //succesfully 
-                const data = await response.json();
-                onFoodsAdded(data.foods); //notify parent component of added foods
-                onClose(); //close modal
+                alert("Foods added successfully.");
+                onClose();
             } 
             else {
                 console.error("Error saving selected foods:", response.statusText);
@@ -83,7 +82,9 @@ const AddFoodModal = ({ isOpen, onClose, onFoodsAdded }) => {
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                 />
+
                 <button onClick={handleSearch}>Search</button>
+                
                 {searchResults.length > 0 && (
                     <div>
                         <h3>Results:</h3>

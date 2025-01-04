@@ -2,66 +2,23 @@ import { useState } from "react";
 import FoodList from "../components/FoodList";
 import FilterBar from "../components/FilterBar";
 import SortingDropDown from "../components/SortingDropDown";
-import SearchBar from "../components/SearchBar";
 import AddFoodModal from "../components/AddFoodModal";
 import { fetchWithAuth } from "../utils/auth";
 
 const FoodListPage = () => {
     const [filters, setFilters] = useState({});
     const [sortOptions, setSortOptions] = useState({ category: "name", order: "asc" });
-    const [searchQuery, setSearchQuery] = useState(""); //Keep track of search input
     const [isModalOpen, setIsModalOpen] = useState(false); //Keep track of modal visiblity
-    const [foodList, setFoodList] = useState([]); //Keep track of foods
+    const [selectedItems, setSelectedItems] = useState(new Set()); //track selected items for checkbox
 
-    //Filter Schema
-    const filterSchema = [
-        { key: "food_name", label: "Food Name", type: "text" },
-        { key: "calories_min", label: "Min Calories", type: "number" },
-        { key: "calories_max", label: "Max Calories", type: "number" },
-        { key: "carbs_min", label: "Min Carbs", type: "number" },
-        { key: "carbs_max", label: "Max Carbs", type: "number" },
-        { key: "protein_min", label: "Min Protein", type: "number" },
-        { key: "protein_max", label: "Max Protein", type: "number" },
-        { key: "fat_min", label: "Min Fat", type: "number" },
-        { key: "fat_max", label: "Max Fat", type: "number" },
-    ];
-
-    useEffect(() => {
-        const fetchFoodList = async () => {
-            try {
-                const response = await fetchWithAuth("/api/foods/");
-                if (response.ok) { //food list successfully fetched
-                    const data = await response.json();
-                    setFoodList(data.foods || []);
-                }
-                else {
-                    console.error("Error fetching food list:", response.statusText);
-                }
-            }
-            catch (error) {
-                console.error("Error fetching food list:", error)
-            }
-        };
-        fetchFoodList();
-    }, []);
-
-    //Handle changes to filters
-    const handleFiltersChange = (updatedFilters) => {
-        setFilters(updatedFilters);
+    //Handle changes to filters and pass query string to backend
+    const handleFiltersChange = (queryString) => {
+        setFilters(queryString);
     };
 
     //Handle changes to sorting options
     const handleSortChange = (newSortOptions) => {
         setSortOptions(newSortOptions);
-    };
-
-    //Handle changes to search input
-    const handleSearch = (searchTerm) => {
-        setSearchQuery(searchTerm); //Update the search query
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            food_name: searchTerm,
-        }));
     };
 
     const handleOpenModal = () => {
@@ -72,9 +29,65 @@ const FoodListPage = () => {
         setIsModalOpen(false);
     };
 
-    //Handle new foods being selected/added
-    const handleFoodsAdded = (newFoods) => {
-        setFoodList((prevList) => [...prevList, ...newFoods]);
+    const handleCheckboxChange = (isChecked, idOrAll, ids = []) => {
+        setSelectedItems((prev) => {
+            const updatedSet = new Set(prev);
+            if (idOrAll === "all") {
+                ids.forEach((id) => {
+                    if (isChecked){
+                        updatedSet.add(id);
+                    }
+                    else {
+                        updatedSet.delete(id);
+                    }
+                });
+            }
+            else {
+                if (isChecked) {
+                    updatedSet.add(idOrAll);
+                }
+                else {
+                    updatedSet.delete(idOrAll);
+                }
+            }
+            return updatedSet;
+        });
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedItems.size === 0) {
+            alert("No items selected for deletion.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            "Are you sure you want to delete the selected items?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetchWithAuth("/api/foods/delete/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ ids: Array.from(selectedItems) }),
+            });
+
+            if (response.ok) {
+                alert("Selected items deleted successfully.");
+                setSelectedItems(new Set());
+            }
+            else {
+                console.error("Failed to delete items:", response.statusText);
+            }
+        }
+        catch (error) {
+            console.error("Error deleting items:", error);
+        }
     };
 
     return (
@@ -83,11 +96,13 @@ const FoodListPage = () => {
 
             <button onClick={handleOpenModal}>Add Food</button>
 
-            {/* Search Bar */}
-            <SearchBar onSearch={handleSearch} />
+            {/* Only allow delete button if there are food items */}
+            <button onClick={handleDeleteSelected} disabled={selectedItems.size === 0}>
+                Delete Selected
+            </button>
 
-            {/* Filters */}
-            <FilterBar filters={filterSchema} onFilterChange={handleFiltersChange} />
+            {/* Filtering */}
+            <FilterBar onSubmit={handleFiltersChange} />
 
             {/* Sorting */}
             <SortingDropDown
@@ -97,15 +112,14 @@ const FoodListPage = () => {
 
             {/* Food list with pagination */}
             <FoodList
-                foodList={foodList}
-                searchQuery={searchQuery}
                 sortOptions={sortOptions}
                 filters={filters}
+                onCheckboxChange={handleCheckboxChange}
             />
+
             <AddFoodModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
-                onFoodsAdded={handleFoodsAdded}
             />
         </div>
     );

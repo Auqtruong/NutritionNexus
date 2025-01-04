@@ -1,6 +1,6 @@
-from datetime import date
+from django.utils.timezone import now
 from decimal import Decimal
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -123,16 +123,19 @@ def add_food(request):
         
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#Delete existing/created foods from list/database of foods; return 204 if success, 404 if food is not found
+#Delete existing/created foods from list/database of foods; return 204 if success, 500 for errors
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_food(request, pk):
+def delete_food(request):
+    ids = request.data.get("ids", []) #retrieve ids associated with selected foods
+    if not ids:
+        return Response({"error": "No food IDS provided"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        food = Food.objects.get(id=pk)
-        food.delete()
-        return Response({"message": "Food item deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    except Food.DoesNotExist:
-        return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
+        food = Food.objects.filter(id__in=ids).delete()
+        return Response({"message": "Selected food items deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     
 #List Daily Intake of Authenticated User
 class DailyIntakeListView(ListAPIView):
@@ -147,8 +150,9 @@ class DailyIntakeListView(ListAPIView):
         #Default display shows current date's entries; filters for other previous dates will override
         queryset = DailyIntake.objects.filter(user=self.request.user)
         
-        if not self.request.query_params.get("date_min") and not self.request.query_params.get("date_max"):
-            today    = date.today()
+        if not self.request.GET.get("food_entry_date"):
+            #now().date() uses Django's timezone instead of system's local timezone via date.today()
+            today    = now().date()
             queryset = queryset.filter(food_entry_date=today)
             
         return queryset
@@ -240,5 +244,5 @@ class DashboardView(RetrieveAPIView):
     def get_object(self):
         return {
             "request": self.request,
-            "today": date.today()
+            "today": now().date()
         }
