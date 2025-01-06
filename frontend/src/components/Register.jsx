@@ -79,7 +79,9 @@ const Register = () => {
                     aria-label="Confirm password"
                     required
                 />
-                <button type="submit">Sign Up</button>
+                <button type="submit">
+                    Sign Up
+                </button>
             </form>
             {/* Success and error color highlighting for user; redirect them to login page after */}
             {error && <p style={{ color: "red" }}>{error}</p>}

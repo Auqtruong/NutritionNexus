@@ -6,9 +6,9 @@ import AddFoodModal from "../components/AddFoodModal";
 import { fetchWithAuth } from "../utils/auth";
 
 const FoodListPage = () => {
-    const [filters, setFilters] = useState({});
-    const [sortOptions, setSortOptions] = useState({ category: "name", order: "asc" });
-    const [isModalOpen, setIsModalOpen] = useState(false); //Keep track of modal visiblity
+    const [filters, setFilters]             = useState({});
+    const [sortOptions, setSortOptions]     = useState({ category: "name", order: "asc" });
+    const [isModalOpen, setIsModalOpen]     = useState(false); //Keep track of modal visiblity
     const [selectedItems, setSelectedItems] = useState(new Set()); //track selected items for checkbox
 
     //Handle changes to filters and pass query string to backend
@@ -94,7 +94,9 @@ const FoodListPage = () => {
         <div className="food-list-page">
             <h1>Food List</h1>
 
-            <button onClick={handleOpenModal}>Add Food</button>
+            <button onClick={handleOpenModal}>
+                Add Food
+            </button>
 
             {/* Only allow delete button if there are food items */}
             <button onClick={handleDeleteSelected} disabled={selectedItems.size === 0}>
@@ -106,7 +108,13 @@ const FoodListPage = () => {
 
             {/* Sorting */}
             <SortingDropDown
-                categories={["Food Name", "Calories", "Carbohydrates", "Protein", "Fat"]}
+                categories={[
+                    "Food Name", 
+                    "Calories", 
+                    "Carbohydrates", 
+                    "Protein", 
+                    "Fat"
+                ]}
                 onSortChange={handleSortChange}
             />
 

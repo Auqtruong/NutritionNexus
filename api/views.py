@@ -123,7 +123,7 @@ def add_food(request):
         
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#Delete existing/created foods from list/database of foods; return 204 if success, 500 for errors
+#Delete existing/created foods from list/database of foods; 200 success, 400 for none selected or available, 500 for error
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_food(request):
@@ -131,8 +131,10 @@ def delete_food(request):
     if not ids:
         return Response({"error": "No food IDS provided"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        food = Food.objects.filter(id__in=ids).delete()
-        return Response({"message": "Selected food items deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        deleted_count, _ = Food.objects.filter(id__in=ids).delete()
+        if deleted_count == 0:
+            return Response({"error": "No matching entries found to delete"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": f"Deleted {deleted_count} food items successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -177,16 +179,20 @@ def add_to_daily_intake(request):
     except Food.DoesNotExist:
         return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
 
-#Delete Food from Daily Intake View; Only delete if entry is available in Daily Intake; 204 if success, 404 if unable to find food entry
+#Delete Food from Daily Intake View; Only delete if entry is available in Daily Intake; 200 success, 400 for none selected or available, 500 for error
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_from_daily_intake(request, pk):
+def delete_from_daily_intake(request):
+    ids = request.data.get("ids", []) #retrieve ids associated with selected foods
+    if not ids:
+        return Response({"error": "No IDs provided"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        intake = DailyIntake.objects.get(id=pk, user=request.user)
-        intake.delete()
-        return Response({"message": "Entry deleted"}, status=status.HTTP_204_NO_CONTENT)
-    except DailyIntake.DoesNotExist:
-        return Response({"error": "Entry not found"}, status=status.HTTP_404_NOT_FOUND)
+        deleted_count, _ = DailyIntake.objects.filter(id__in=ids, user=request.user).delete()
+        if deleted_count == 0:
+            return Response({"error": "No matching entries found to delete"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": f"Deleted {deleted_count} entries successfully"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 #List Weight Log of Authenticated User
 class WeightLogListView(ListAPIView):

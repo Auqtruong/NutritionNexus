@@ -33,7 +33,7 @@ urlpatterns = [
     #Daily Intake paths
     path("api/intake/"                  , DailyIntakeListView.as_view()     , name="list_daily_intake"),
     path("api/intake/add/"              , views.add_to_daily_intake         , name="add_to_daily_intake"),
-    path("api/intake/delete/<int:pk>/"  , views.delete_from_daily_intake    , name="delete_from_daily_intake"),
+    path("api/intake/delete/"           , views.delete_from_daily_intake    , name="delete_from_daily_intake"),
     
     #Weight Tracking paths
     path("api/weight/"                  , WeightLogListView.as_view()       , name="list_weight_log"),

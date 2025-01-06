@@ -46,7 +46,9 @@ const Login = () => {
                     aria-label="Password"
                     required
                 />
-                <button type="submit">Login</button>
+                <button type="submit">
+                    Login
+                </button>
             </form>
             {error && <p>{error}</p>}  {/* display the error if there is one when login unsuccessful*/}
         </div>

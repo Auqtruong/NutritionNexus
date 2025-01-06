@@ -83,7 +83,9 @@ const AddFoodModal = ({ isOpen, onClose }) => {
                     onChange={(event) => setSearchQuery(event.target.value)}
                 />
 
-                <button onClick={handleSearch}>Search</button>
+                <button onClick={handleSearch}>
+                    Search
+                </button>
                 
                 {searchResults.length > 0 && (
                     <div>
@@ -101,7 +103,9 @@ const AddFoodModal = ({ isOpen, onClose }) => {
                                 </li>
                             ))}
                         </ul>
-                        <button onClick={saveSelectedFoods}>Add Selected Foods</button>
+                        <button onClick={saveSelectedFoods}>
+                            Add Selected Foods
+                        </button>
                     </div>
                 )}
             </div>

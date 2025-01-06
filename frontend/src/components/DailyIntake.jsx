@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const DailyIntake = ({ searchQuery, sortOptions }) => {
+const DailyIntake = ({ sortOptions, filters, onCheckboxChange }) => {
     const navigate = useNavigate();
 
     const handleFoodClick = (id) => {
@@ -17,6 +17,18 @@ const DailyIntake = ({ searchQuery, sortOptions }) => {
             <table className="daily-intake-table">
                 <thead>
                     <tr>
+                        <th>
+                            <input
+                                type="checkbox"
+                                onChange={(event) =>
+                                    onCheckboxChange(
+                                        event.target.checked,
+                                        "all",
+                                        data.map((entry) => entry.id)
+                                    )
+                                }
+                            />
+                        </th>
                         <th>Food Name</th>
                         <th>Quantity (g)</th>
                         <th>Date</th>
@@ -28,12 +40,18 @@ const DailyIntake = ({ searchQuery, sortOptions }) => {
                 </thead>
                 <tbody>
                     {data.map((item) => ( //iterate over every entry and create a row
-                        <tr
-                            key={item.id}
-                            onClick={() => handleFoodClick(item.food_eaten.id)}
-                            style={{ cursor: "pointer" }}
-                        >
-                            <td>{item.food_eaten.name}</td>
+                        <tr key={item.id}>
+                            <td>
+                                <input
+                                    type="checkbox"
+                                    onChange={(event) =>
+                                        onCheckboxChange(event.target.checked, item.id)
+                                    }
+                                />
+                            </td>
+                            <td onClick={() => handleFoodClick(item.food_eaten.id)}>
+                                {item.food_eaten.name}
+                            </td>
                             <td>{item.food_quantity}</td>
                             <td>{new Date(item.food_entry_date).toLocaleDateString()}</td>
                             <td>{item.calories}</td>
@@ -53,7 +71,6 @@ const DailyIntake = ({ searchQuery, sortOptions }) => {
             <FetchDataFromApi
                 endpoint="/api/intake/"
                 queryParams={{
-                    search_term: searchQuery || "",
                     sort_category: sortOptions?.category?.toLowerCase() || "date",
                     sort_order: sortOptions?.order?.toLowerCase() || "desc",
                     ...filters,

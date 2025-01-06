@@ -3,33 +3,17 @@ import DailyIntake from "../components/DailyIntake";
 import FilterBar from "../components/FilterBar";
 import SortingDropDown from "../components/SortingDropDown";
 import FoodSelectModal from "../components/FoodSelectModal";
+import { fetchWithAuth } from "../utils/auth";
 
 const DailyIntakePage = () => {
-    const [filters, setFilters]         = useState({});
-    const [sortOptions, setSortOptions] = useState({ category: "date", order: "desc" });
-    const [searchQuery, setSearchQuery] = useState(""); //Keep track of search input
-    const [isModalOpen, setIsModalOpen] = useState(false); //Keep track of modal visibility
+    const [filters, setFilters]             = useState({});
+    const [sortOptions, setSortOptions]     = useState({ category: "date", order: "desc" });
+    const [isModalOpen, setIsModalOpen]     = useState(false); //Keep track of modal visibility
+    const [selectedItems, setSelectedItems] = useState(new Set()); //track selected items for checkbox
 
-    const handleOpenModal  = () => {
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-    };
-
-    //Filter Schema
-    const filterSchema = [
-        { key: "food_name",     label: "Food Name",     type: "text", placeholder: "Search foods..." },
-        { key: "date_min",      label: "Date From",     type: "date"   },
-        { key: "date_max",      label: "Date To",       type: "date"   },
-        { key: "calories_min",  label: "Min Calories",  type: "number" },
-        { key: "calories_max",  label: "Max Calories",  type: "number" },
-    ];
-
-    //Handle changes to filters
-    const handleFiltersChange = (updatedFilters) => {
-        setFilters(updatedFilters); //Update filter values
+    //Handle changes to filters and pass query string to backend
+    const handleFiltersChange = (queryString) => {
+        setFilters(queryString);
     };
 
     //Handle changes to sorting options
@@ -37,41 +21,114 @@ const DailyIntakePage = () => {
         setSortOptions(newSortOptions);
     };
 
-    //Handle changes to search input
-    const handleSearch = (searchTerm) => {
-        setSearchQuery(searchTerm); //Update the search query
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            food_name: searchTerm,
-        }));
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleCheckboxChange = (isChecked, idOrAll, ids = []) => {
+        setSelectedItems((prev) => {
+            const updatedSet = new Set(prev);
+            if (idOrAll === "all") {
+                ids.forEach((id) => {
+                    if (isChecked) {
+						updatedSet.add(id);
+					}
+                    else {
+						updatedSet.delete(id);
+					}
+                });
+            } 
+			else {
+                if (isChecked) {
+					updatedSet.add(idOrAll);
+				}
+                else {
+					updatedSet.delete(idOrAll);
+				}
+            }
+            return updatedSet;
+        });
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedItems.size === 0) {
+            alert("No entries selected for deletion.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+			"Are you sure you want to delete the selected entries?"
+		);
+		
+        if (!confirmed) {
+			return;
+		}
+
+        try {
+            const response = await fetchWithAuth("/api/intake/delete/", {
+                method: "POST",
+                headers: { 
+					"Content-Type": "application/json" 
+				},
+                body: JSON.stringify({ ids: Array.from(selectedItems) }),
+            });
+
+            if (response.ok) {
+                alert("Selected entries deleted successfully.");
+                setSelectedItems(new Set());
+            } 
+			else {
+                console.error("Failed to delete entries:", response.statusText);
+            }
+        } 
+		catch (error) {
+            console.error("Error deleting entries:", error);
+        }
     };
 
     return (
         <div className="daily-intake-page">
             <h1>Your Daily Intake</h1>
-
-            {/* Filters */}
-            <FilterBar filters={filterSchema} onFilterChange={handleFiltersChange} />
-
-            {/* Sorting */}
-            <SortingDropDown
-                categories={["Food Name", "Calories", "Carbohydrates", "Protein", "Fat", "Date"]}
-                onSortChange={handleSortChange}
-            />
-            {/* Add Entry */}
-            <button onClick={handleOpenModal}>
-                + Add Entry
+			
+			<button onClick={handleOpenModal}>
+                Add Food
             </button>
 
-            {/* Daily intake list */}
-            <DailyIntake
-                searchQuery={searchQuery}
-                sortOptions={sortOptions}
-                filters={filters}
+            {/* Only allow delete button if there are Daily Intake entries */}
+            <button onClick={handleDeleteSelected} disabled={selectedItems.size === 0}>
+                Delete Selected
+            </button>
+
+            {/* Filtering */}
+            <FilterBar onSubmit={handleFiltersChange} />
+			
+			{/* Sorting */}
+            <SortingDropDown
+                categories={[
+                    "Daily Intake Food Name",
+                    "Daily Intake Food Calories",
+                    "Carbohydrates",
+                    "Protein",
+                    "Fat",
+                    "Date"
+                ]}
+                onSortChange={handleSortChange}
             />
 
-            {/* Food Select Modal */}
-            {isModalOpen && <FoodSelecctModal onClose={handleCloseModal} />}
+            <DailyIntake
+                sortOptions={sortOptions}
+                filters={filters}
+                onCheckboxChange={handleCheckboxChange}
+            />
+
+            <FoodSelectModal
+				isOpen={isModalOpen}
+				onClose={handleCloseModal}
+			/>
         </div>
     );
 };
