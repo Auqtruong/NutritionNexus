@@ -2,7 +2,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 
 //utility component for generic/dynamic filtering across different pages with different categories
-const FilterBar = ({ onSubmit }) => {
+const FilterBar = ({ onSubmit = () => {} }) => {
     const [input, setInput] = useState("");
 
     const handleSubmit = (event) => {

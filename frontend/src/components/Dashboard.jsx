@@ -21,7 +21,7 @@ const Dashboard = () => {
                 <h3>Last Recorded Weight</h3>
                 <p>
                     {/* Use most recent recorded weight and entry date since user might not always update daily weight value */}
-                    Last Recorded Weight: {data.last_rec_weight !== null ? `${data.last_rec_weight} kg` : "No data available"}
+                    Last Recorded Weight: {data.last_rec_weight !== null ? `${data.last_rec_weight} lbs` : "No data available"}
                 </p>
                 <p>
                     Date: {data.last_weight_date !== null ? data.last_weight_date : "No data available"}

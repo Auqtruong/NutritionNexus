@@ -355,8 +355,8 @@ class WeightTrackerTests(APITestCase):
         cls.weight_1    = WeightTracker.objects.create(user=cls.user, weight=140.00, weight_entry_date=timezone.now().date())
         cls.list_url    = reverse("list_weight_log")
         cls.record_url  = reverse("record_weight")
-        cls.update_url  = reverse("update_weight_entry", args=[cls.weight_1.id])
-        cls.delete_url  = reverse("delete_weight_entry", args=[cls.weight_1.id])
+        cls.update_url  = reverse("update_weight", args=[cls.weight_1.id])
+        cls.delete_url  = reverse("delete_weight", args=[cls.weight_1.id])
     
     def setUp(self):
         self.client.force_authenticate(user=self.user)
@@ -437,7 +437,7 @@ class WeightTrackerTests(APITestCase):
     def test_update_non_existent_weight_entry(self):
         #Test case: User attempts to update a non-existent weight entry
         non_existent_id = WeightTracker.objects.latest("id").id + 1
-        url             = reverse("update_weight_entry", args=[non_existent_id])
+        url             = reverse("update_weight", args=[non_existent_id])
         response        = self.client.put(url, {"weight": 145.00}, format="json")
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

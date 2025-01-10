@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { fetchWithAuth } from "../utils/auth";
 
-const AddFoodModal = ({ isOpen, onClose }) => {
-    const [searchQuery, setSearchQuery]     = useState(""); //track search bar value
+const AddFoodModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) => {
+    const [searchQuery  , setSearchQuery]   = useState(""); //track search bar value
     const [searchResults, setSearchResults] = useState([]); //holds list of food items returned from /api/nutrition
     const [selectedFoods, setSelectedFoods] = useState([]); //track foods user selected to add/save
 
@@ -53,9 +53,10 @@ const AddFoodModal = ({ isOpen, onClose }) => {
                 }),
             });
 
-            if (response.ok) { //succesfully 
+            if (response.ok) { //succesfully added food(s)
                 alert("Foods added successfully.");
                 onClose();
+                setRefreshKey((prev) => prev + 1); //increment refreshKey
             } 
             else {
                 console.error("Error saving selected foods:", response.statusText);
@@ -111,6 +112,13 @@ const AddFoodModal = ({ isOpen, onClose }) => {
             </div>
         </div>
     );
+};
+
+//Validation
+AddFoodModal.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    setRefreshKey: PropTypes.func.isRequired,
 };
 
 export default AddFoodModal;

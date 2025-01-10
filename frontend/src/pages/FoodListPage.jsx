@@ -3,13 +3,14 @@ import FoodList from "../components/FoodList";
 import FilterBar from "../components/FilterBar";
 import SortingDropDown from "../components/SortingDropDown";
 import AddFoodModal from "../components/AddFoodModal";
-import { fetchWithAuth } from "../utils/auth";
+import { handleDeleteSelected } from "../utils/handleDeleteSelected";
 
 const FoodListPage = () => {
-    const [filters, setFilters]             = useState({});
-    const [sortOptions, setSortOptions]     = useState({ category: "name", order: "asc" });
-    const [isModalOpen, setIsModalOpen]     = useState(false); //Keep track of modal visiblity
-    const [selectedItems, setSelectedItems] = useState(new Set()); //track selected items for checkbox
+    const [filters      , setFilters]       = useState({});
+    const [sortOptions  , setSortOptions]   = useState({ category: "name", order: "asc" });
+    const [isModalOpen  , setIsModalOpen]   = useState(false); //Keep track of modal visiblity
+    const [selectedItems, setSelectedItems] = useState(new Set()); //track selected items for deletion
+    const [refreshKey   , setRefreshKey]    = useState(0); //state to trigger refresh after update
 
     //Handle changes to filters and pass query string to backend
     const handleFiltersChange = (queryString) => {
@@ -54,40 +55,14 @@ const FoodListPage = () => {
         });
     };
 
-    const handleDeleteSelected = async () => {
-        if (selectedItems.size === 0) {
-            alert("No items selected for deletion.");
-            return;
-        }
-
-        const confirmed = window.confirm(
-            "Are you sure you want to delete the selected items?"
+    //Handle deletes
+    const handleDelete = () => {
+        handleDeleteSelected(
+            "/api/foods/delete/",
+            selectedItems,
+            setSelectedItems,
+            setRefreshKey
         );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetchWithAuth("/api/foods/delete/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ ids: Array.from(selectedItems) }),
-            });
-
-            if (response.ok) {
-                alert("Selected items deleted successfully.");
-                setSelectedItems(new Set());
-            }
-            else {
-                console.error("Failed to delete items:", response.statusText);
-            }
-        }
-        catch (error) {
-            console.error("Error deleting items:", error);
-        }
     };
 
     return (
@@ -99,7 +74,7 @@ const FoodListPage = () => {
             </button>
 
             {/* Only allow delete button if there are food items */}
-            <button onClick={handleDeleteSelected} disabled={selectedItems.size === 0}>
+            <button onClick={handleDelete} disabled={selectedItems.size === 0}>
                 Delete Selected
             </button>
 
@@ -123,11 +98,13 @@ const FoodListPage = () => {
                 sortOptions={sortOptions}
                 filters={filters}
                 onCheckboxChange={handleCheckboxChange}
+                refreshKey={refreshKey}
             />
 
             <AddFoodModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
+                setRefreshKey={setRefreshKey}
             />
         </div>
     );

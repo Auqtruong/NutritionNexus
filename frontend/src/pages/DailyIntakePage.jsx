@@ -3,13 +3,15 @@ import DailyIntake from "../components/DailyIntake";
 import FilterBar from "../components/FilterBar";
 import SortingDropDown from "../components/SortingDropDown";
 import FoodSelectModal from "../components/FoodSelectModal";
-import { fetchWithAuth } from "../utils/auth";
+import { handleDeleteSelected } from "../utils/handleDeleteSelected";
 
 const DailyIntakePage = () => {
-    const [filters, setFilters]             = useState({});
-    const [sortOptions, setSortOptions]     = useState({ category: "date", order: "desc" });
-    const [isModalOpen, setIsModalOpen]     = useState(false); //Keep track of modal visibility
-    const [selectedItems, setSelectedItems] = useState(new Set()); //track selected items for checkbox
+    const [filters      , setFilters]       = useState({});
+    const [sortOptions  , setSortOptions]   = useState({ category: "date", order: "desc" });
+    const [isModalOpen  , setIsModalOpen]   = useState(false); //Keep track of modal visibility
+    const [selectedItems, setSelectedItems] = useState(new Set()); //track selected entries for deletion
+    const [refreshKey   , setRefreshKey]    = useState(0); //state to trigger refresh after update
+
 
     //Handle changes to filters and pass query string to backend
     const handleFiltersChange = (queryString) => {
@@ -54,40 +56,14 @@ const DailyIntakePage = () => {
         });
     };
 
-    const handleDeleteSelected = async () => {
-        if (selectedItems.size === 0) {
-            alert("No entries selected for deletion.");
-            return;
-        }
-
-        const confirmed = window.confirm(
-			"Are you sure you want to delete the selected entries?"
-		);
-		
-        if (!confirmed) {
-			return;
-		}
-
-        try {
-            const response = await fetchWithAuth("/api/intake/delete/", {
-                method: "POST",
-                headers: { 
-					"Content-Type": "application/json" 
-				},
-                body: JSON.stringify({ ids: Array.from(selectedItems) }),
-            });
-
-            if (response.ok) {
-                alert("Selected entries deleted successfully.");
-                setSelectedItems(new Set());
-            } 
-			else {
-                console.error("Failed to delete entries:", response.statusText);
-            }
-        } 
-		catch (error) {
-            console.error("Error deleting entries:", error);
-        }
+    //Handle deletes
+    const handleDelete = () => {
+        handleDeleteSelected(
+            "/api/intake/delete",
+            selectedItems,
+            setSelectedItems,
+            setRefreshKey
+        );
     };
 
     return (
@@ -99,7 +75,7 @@ const DailyIntakePage = () => {
             </button>
 
             {/* Only allow delete button if there are Daily Intake entries */}
-            <button onClick={handleDeleteSelected} disabled={selectedItems.size === 0}>
+            <button onClick={handleDelete} disabled={selectedItems.size === 0}>
                 Delete Selected
             </button>
 
@@ -123,11 +99,13 @@ const DailyIntakePage = () => {
                 sortOptions={sortOptions}
                 filters={filters}
                 onCheckboxChange={handleCheckboxChange}
+                refreshKey={refreshKey}
             />
 
             <FoodSelectModal
 				isOpen={isModalOpen}
 				onClose={handleCloseModal}
+                setRefreshKey={setRefreshKey}
 			/>
         </div>
     );

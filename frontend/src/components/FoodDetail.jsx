@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 const FoodDetail = () => { 
-    const [food, setFood]       = useState(null);
+    const [food   , setFood]    = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError]     = useState("");
+    const [error  , setError]   = useState("");
     const { foodId }            = useParams();
 
     useEffect(() => {

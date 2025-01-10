@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 const SortingDropDown = ({ categories, onSortChange }) => {
     const [sortCategory, setSortCategory]   = useState(""); //track category to sort by
-    const [sortOrder, setSortOrder]         = useState(""); //track ordering to sort by
+    const [sortOrder   , setSortOrder]      = useState(""); //track ordering to sort by
 
     const orders = ["Ascending", "Descending"];
 
@@ -71,8 +71,8 @@ const SortingDropDown = ({ categories, onSortChange }) => {
 
 // Prop types validation
 SortingDropDown.propTypes = {
-    categories: PropTypes.arrayOf(PropTypes.string),
-    onSortChange: PropTypes.func,
+    categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+    onSortChange: PropTypes.func.isRequired,
 };
 
 // Default props (if no categories are provided)

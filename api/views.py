@@ -217,30 +217,38 @@ def record_weight(request):
     WeightTracker.objects.create(user=request.user, weight=weight, weight_entry_date=request.data.get("date"))
     return Response({"message": "Weight recorded successfully"}, status=status.HTTP_201_CREATED)
 
-#Update User Weight View; 200 for success, 404 if unable to find weight to update; default to existing entry if no new weight is provided
+#Update User Weight View; 200 for success, 400 for invalid value entered, 404 if unable to find weight; default to existing entry if no new weight is provided
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
-def update_weight_entry(request, pk):
+def update_weight(request, pk):
     try:
-        weight_entry                    = WeightTracker.objects.get(id=pk, user=request.user)
-        weight_entry.weight             = request.data.get("weight", weight_entry.weight)
-        weight_entry.weight_entry_date  = request.data.get("date", weight_entry.weight_entry_date)
+        weight_entry = WeightTracker.objects.get(id=pk, user=request.user)
+        weight       = request.data.get("weight")
+        if not isinstance(weight, (int, float)):
+            return Response({"error": "Invalid weight value"}, status=status.HTTP_400_BAD_REQUEST)
+        weight_entry.weight = weight
+        weight_entry.weight_entry_date = request.data.get("date") or weight_entry.weight_entry_date
         weight_entry.save()
         return Response({"message": "Weight entry updated successfully"}, status=status.HTTP_200_OK)
     except WeightTracker.DoesNotExist:
         return Response({"error": "Weight entry not found"}, status=status.HTTP_404_NOT_FOUND)
         
 
-#Delete a Weight Entry from User Weight Log; Only delete if entry is available in Weight Log; 204 if success, 404 if unable to find weight entry
+#Delete User Weight Entry View; 200 for success, 400 for invalid value entered, 404 if unable to find weight; default to existing entry if no new weight is provided
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_weight_entry(request, pk):
+def delete_weight(request):
+    ids = request.data.get("ids", [])  # Retrieve IDs associated with selected weights
+    if not ids:
+        return Response({"error": "No IDs provided"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        weight_entry = WeightTracker.objects.get(id=pk, user=request.user)
-        weight_entry.delete()
-        return Response({"message": "Weight entry deleted"}, status=status.HTTP_204_NO_CONTENT)
-    except WeightTracker.DoesNotExist:
-        return Response({"error": "Weight entry not found"}, status=status.HTTP_404_NOT_FOUND)
+        deleted_count, _ = WeightTracker.objects.filter(id__in=ids, user=request.user).delete()
+        if deleted_count == 0:
+            return Response({"error": "No matching entries found to delete"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": f"Deleted {deleted_count} weight entries successfully"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
 #Dashboard view
 class DashboardView(RetrieveAPIView):

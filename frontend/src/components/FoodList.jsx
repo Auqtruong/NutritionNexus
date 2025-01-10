@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const FoodList = ({ sortOptions, filters, onCheckboxChange }) => {
-    //Track current page; initial page set to 1
-    const [currentPage, setCurrentPage] = useState(1);
+const FoodList = ({ sortOptions, filters, onCheckboxChange, refreshKey }) => {
+    const [currentPage, setCurrentPage] = useState(1); //Track current page; initial page set to 1
     const navigate = useNavigate();
+    const [dataKey    , setDataKey]     = useState(0); //Track state to force re-render data fetch when refreshKey changes
+
+    useEffect(() => {
+        setDataKey((prev) => prev + 1);
+    }, [refreshKey]);
 
     const handleFoodClick = (id) => {
         navigate(`/food/${id}`); //Navigate to FoodDetailPage for the food that was clicked
@@ -19,7 +23,7 @@ const FoodList = ({ sortOptions, filters, onCheckboxChange }) => {
 
         return (
             <div>
-                <table>
+                <table className="food-list-table">
                     <thead>
                         <tr>
                             <th>
@@ -99,6 +103,7 @@ const FoodList = ({ sortOptions, filters, onCheckboxChange }) => {
                     sort_order: sortOptions?.order?.toLowerCase() || "asc",
                     ...filters, //pass filters to backend for processing
                 }}
+                key={dataKey}
                 renderData={renderFoodList}
             />
         </div>

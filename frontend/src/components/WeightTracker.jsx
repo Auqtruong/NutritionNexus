@@ -1,28 +1,68 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const WeightTracker = () => {
-    //Track current page; initial page set to 1
-    const [currentPage, setCurrentPage] = useState(1);
+const WeightTracker = ({ sortOptions, filters, onCheckboxChange, onEdit, refreshKey }) => {
+    const [currentPage, setCurrentPage] = useState(1); //Track current page; initial page set to 1
+    const [dataKey    , setDataKey]     = useState(0); //Track state to force re-render data fetch when refreshKey changes
 
-    //Render weight log entries
+    useEffect(() => {
+        setDataKey((prev) => prev + 1);
+    }, [refreshKey]);
+
+    //Render paginated weight log
     const renderWeightLog = (data) => {
-        if (data.results.length === 0) {
+        if (!data.results || data.results.length === 0) {
             return <p>No weight entries found.</p>;
         }
 
         return (
             <div>
-                <ul>
-                    {data.results.map((entry) => (
-                        <li key={entry.id}>
-                            <div>
-                                <p><strong>Date:</strong> {entry.weight_entry_date}</p>
-                                <p><strong>Weight:</strong> {entry.weight} kg</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                <table className="weight-tracker-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input
+                                    type="checkbox"
+                                    onChange={(event) =>
+                                        onCheckboxChange(
+                                            event.target.checked,
+                                            "all",
+                                            data.results.map((entry) => entry.id)
+                                        )
+                                    }
+                                />
+                            </th>
+                            <th>Date</th>
+                            <th>Weight (kg)</th>
+                            <th>Actions</th> {/* Actions column for Edit button(s) */}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.results.map((item) => (
+                            <tr key={item.id}>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        onChange={(event) =>
+                                            onCheckboxChange(
+                                                event.target.checked,
+                                                item.id
+                                            )
+                                        }
+                                    />
+                                </td>
+                                <td>{new Date(item.weight_entry_date).toLocaleDateString()}</td>
+                                <td>{item.weight}</td>
+                                <td>
+                                    <button onClick={() => onEdit(item)}>
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
                 {/* Pagination controls */}
                 <div>
                     <button
@@ -49,6 +89,12 @@ const WeightTracker = () => {
             <FetchDataFromApi
                 endpoint="/api/weight/"
                 page={currentPage}
+                queryParams={{
+                    sort_category: sortOptions?.category?.toLowerCase() || "weight_entry_date",
+                    sort_order: sortOptions?.order?.toLowerCase() || "desc",
+                    ...filters, //pass filters to backend for processing
+                }}
+                key={dataKey}
                 renderData={renderWeightLog}
             />
         </div>

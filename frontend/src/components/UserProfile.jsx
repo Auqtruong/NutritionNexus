@@ -3,12 +3,12 @@ import { fetchWithAuth, logout } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 
 const UserProfile = () => {
-    const [userData, setUserData]       = useState({ username: "", weight: "" }); //fetched data
-    const [isEditing, setIsEditing]     = useState(false); //display profile vs. form
-    const [formData, setFormData]       = useState({ username: "", password: "" }); //keep track of edits
+    const [userData  , setUserData]     = useState({ username: "", weight: "" }); //fetched data
+    const [isEditing , setIsEditing]    = useState(false); //display profile vs. form
+    const [formData  , setFormData]     = useState({ username: "", password: "" }); //keep track of edits
     const [showDelete, setShowDelete]   = useState(false);
     const [deletePass, setDeletePass]   = useState(""); //track password being entered for account deletion
-    const [loading, setLoading]         = useState(true);
+    const [loading   , setLoading]      = useState(true);
 
     const navigate = useNavigate();
 

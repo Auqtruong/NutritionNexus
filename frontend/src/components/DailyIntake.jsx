@@ -1,8 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import FetchDataFromApi from "./FetchDataFromApi";
 
-const DailyIntake = ({ sortOptions, filters, onCheckboxChange }) => {
+const DailyIntake = ({ sortOptions, filters, onCheckboxChange, refreshKey }) => {
     const navigate = useNavigate();
+    const [dataKey, setDataKey] = useState(0); //Track state to force re-render data fetch when refreshKey changes
+    
+    useEffect(() => {
+        setDataKey((prev) => prev + 1);
+    }, [refreshKey]);
 
     const handleFoodClick = (id) => {
         navigate(`/food/${id}`); //Navigate to FoodDetailPage for the food that was clicked
@@ -67,6 +72,7 @@ const DailyIntake = ({ sortOptions, filters, onCheckboxChange }) => {
 
     return (
         <div>
+            <h2>Daily Intake</h2>
             {/* Fetch and render daily intake data */}
             <FetchDataFromApi
                 endpoint="/api/intake/"
@@ -75,6 +81,7 @@ const DailyIntake = ({ sortOptions, filters, onCheckboxChange }) => {
                     sort_order: sortOptions?.order?.toLowerCase() || "desc",
                     ...filters,
                 }}
+                key={dataKey}
                 renderData={renderDailyIntake}
             />
         </div>

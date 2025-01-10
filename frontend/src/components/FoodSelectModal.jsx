@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../utils/auth";
 import PropTypes from "prop-types";
 
-const FoodSelectModal = ({ isOpen, onClose }) => {
-    const [foodList, setFoodList]               = useState([]); //holds list of food items from food list
-    const [searchQuery, setSearchQuery]         = useState(""); //track search bar value
+const FoodSelectModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) => {
+    const [foodList      , setFoodList]         = useState([]); //holds list of food items from food list
+    const [searchQuery   , setSearchQuery]      = useState(""); //track search bar value
     const [selectedFoodId, setSelectedFoodId]   = useState(null); //track food id of selected food item to add
-    const [quantity, setQuantity]               = useState(100); //default 100g
+    const [quantity      , setQuantity]         = useState(100); //default 100g
 
     //Fetch food list to display
     useEffect(() => {
@@ -49,6 +49,7 @@ const FoodSelectModal = ({ isOpen, onClose }) => {
             if (response.ok) {//food item(s) successfully added to daily intake
                 alert("Food added to daily intake!");
                 onClose();
+                setRefreshKey((prev) => prev + 1);
             }
             else {
                 const errorData = await response.json();
@@ -124,7 +125,8 @@ const FoodSelectModal = ({ isOpen, onClose }) => {
 //Validation
 FoodSelectModal.propTypes = {
     isOpen: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired, 
+    onClose: PropTypes.func.isRequired,
+    setRefreshKey: PropTypes.func.isRequired,
 };
 
 export default FoodSelectModal;

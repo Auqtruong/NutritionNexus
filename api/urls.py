@@ -38,8 +38,8 @@ urlpatterns = [
     #Weight Tracking paths
     path("api/weight/"                  , WeightLogListView.as_view()       , name="list_weight_log"),
     path("api/weight/record/"           , views.record_weight               , name="record_weight"),
-    path("api/weight/update/<int:pk>/"  , views.update_weight_entry         , name="update_weight_entry"),
-    path("api/weight/delete/<int:pk>/"  , views.delete_weight_entry         , name="delete_weight_entry"),
+    path("api/weight/update/<int:pk>/"  , views.update_weight               , name="update_weight"),
+    path("api/weight/delete/"           , views.delete_weight               , name="delete_weight"),
     
     #Dashboard path
     path("api/dashboard/"               , DashboardView.as_view()           , name="dashboard")

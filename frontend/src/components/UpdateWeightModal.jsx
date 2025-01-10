@@ -1,43 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { fetchWithAuth } from "../utils/auth";
 
-const AddWeightModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) => {
+const UpdateWeightModal = ({ isOpen = false, onClose = () => {}, weightEntry = null, setRefreshKey }) => {
     const [weight, setWeight] = useState(""); //holds the weight input
     const [date  , setDate]   = useState(""); //holds the optional date input
 
-    //Handle form submission to add weight
-    const handleAddWeight = async () => {
+    //Pre-fill forms with weight and date of selected entry on weightEntry change
+    useEffect(() => {
+        if (weightEntry) {
+            setWeight(weightEntry.weight || "");
+            setDate(weightEntry.date || "");
+        }
+    }, [weightEntry]);
+
+    //Update the selected weight
+    const handleUpdateWeight = async () => {
         if (!weight) {
             alert("Weight is required.");
             return;
         }
 
         try {
-            const response = await fetchWithAuth("/api/weight/record/", {
-                method: "POST",
+            const response = await fetchWithAuth(`/api/weight/update/${weightEntry.id}/`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     weight: parseFloat(weight),
-                    date: date || null, // Send null if date is not provided
+                    date: date || null,
                 }),
             });
 
-            if (response.ok) { //successfully added weight entry
-                alert("Weight recorded successfully.");
+            if (response.ok) { //successful weight entry update
+                alert("Weight updated successfully.");
                 onClose();
-                setRefreshKey((prev) => prev + 1); //increment refreshKey
+                setRefreshKey((prev) => prev + 1); //refresh weight log
+
             } 
             else {
                 const errorData = await response.json();
-                alert(errorData.error || "Failed to record weight.");
+                alert(errorData.error || "Failed to update weight.");
             }
         } 
         catch (error) {
-            console.error("Error recording weight:", error);
-            alert("An error occurred while recording the weight.");
+            console.error("Error updating weight:", error);
+            alert("An error occurred while updating the weight.");
         }
     };
 
@@ -50,14 +59,14 @@ const AddWeightModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) =
                     {/* &times is nicer looking X for close buttons */}
                     &times;
                 </button>
-                <h2>Record Weight</h2>
+                <h2>Update Weight</h2>
                 <div className="form-group">
                     {/* Weight input */}
                     <label htmlFor="weight">Weight (lbs):</label>
                     <input
                         type="number"
                         id="weight"
-                        placeholder="Enter your weight in lbs"
+                        placeholder="Enter updated weight in lbs"
                         value={weight}
                         onChange={(event) => setWeight(event.target.value)}
                         required
@@ -74,8 +83,8 @@ const AddWeightModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) =
                     />
                 </div>
                 <div className="modal-actions">
-                    <button onClick={handleAddWeight}>
-                        Add Weight
+                    <button onClick={handleUpdateWeight}>
+                        Update Weight
                     </button>
                     <button onClick={onClose}>
                         Cancel
@@ -87,10 +96,15 @@ const AddWeightModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) =
 };
 
 //Validation
-AddWeightModal.propTypes = {
+UpdateWeightModal.propTypes = {
     isOpen: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
-    setRefreshKey: PropTypes.func.isRequired,
+    weightEntry: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        weight: PropTypes.number.isRequired,
+        date: PropTypes.string,
+    }),
+    setRefreshKey: PropTypes.func.isRequired, //callback to refresh weight log
 };
 
-export default AddWeightModal;
+export default UpdateWeightModal;
