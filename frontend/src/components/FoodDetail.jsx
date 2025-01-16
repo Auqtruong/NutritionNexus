@@ -1,12 +1,10 @@
 import { fetchWithAuth } from "../utils/auth";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 
-const FoodDetail = () => { 
+const FoodDetail = ({ foodId }) => { 
     const [food   , setFood]    = useState(null);
     const [loading, setLoading] = useState(true);
     const [error  , setError]   = useState("");
-    const { foodId }            = useParams();
 
     useEffect(() => {
         const fetchFoodDetails = async () => {
@@ -34,12 +32,22 @@ const FoodDetail = () => {
 
     return (
         <div className="food-detail">
-            <h2>{food.name}</h2>
-            <div className="nutrition">
-                <p><strong>Calories:</strong> {food.calories} kcal</p>
-                <p><strong>Carbohydrates:</strong> {food.carbohydrates} g</p>
-                <p><strong>Protein:</strong> {food.protein} g</p>
-                <p><strong>Fat:</strong> {food.fat} g</p>
+            <h2 className="food-name">{food.name}</h2>
+            <div className="nutrition-label">
+                <div className="nutrition-section">
+                    <p><strong>Calories:</strong> {food.calories} kcal</p>
+                    <p><strong>Carbohydrates:</strong> {food.carbohydrates} g</p>
+                    <p><strong>Protein:</strong> {food.protein} g</p>
+                    <p><strong>Fat:</strong> {food.fat} g</p>
+                    <p><strong>Saturated Fat:</strong> {food.fat_saturated} g</p>
+                </div>
+                <div className="nutrition-section">
+                    <p><strong>Sodium:</strong> {food.sodium} mg</p>
+                    <p><strong>Potassium:</strong> {food.potassium} mg</p>
+                    <p><strong>Cholesterol:</strong> {food.cholesterol} mg</p>
+                    <p><strong>Fiber:</strong> {food.fiber} g</p>
+                    <p><strong>Sugar:</strong> {food.sugar} g</p>
+                </div>
             </div>
         </div>
     );

@@ -6,7 +6,6 @@ import FoodListPage from "./pages/FoodListPage";
 import FoodDetailPage from "./pages/FoodDetailPage";
 import WeightTrackerPage from "./pages/WeightTrackerPage";
 import UserProfilePage from "./pages/UserProfilePage";
-import Logout from "./components/Logout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { isAuthenticated } from "./utils/auth";
 
@@ -39,15 +38,7 @@ function App() {
                         isAuthenticated() ? (<Navigate to="/daily-intake" />) : (<LoginPage />)
                     }
                 />
-                {/* Logout route */}
-                <Route
-                    path="/logout"
-                    element={
-                        <ProtectedRoute>
-                            <Logout />
-                        </ProtectedRoute>
-                    }
-                />
+
                 {/* Daily Intake route */}
                 <Route
                     path="/daily-intake"
@@ -57,6 +48,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
                 {/* Food List route */}
                 <Route
                     path="/food-list"
@@ -66,6 +58,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
                 {/* Food Detail route */}
                 <Route
                     path="/food/:foodId"
@@ -75,6 +68,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
                 {/* Weight Tracker route */}
                 <Route
                     path="/weight-tracker"
@@ -84,6 +78,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
                 {/* User Profile route */}
                 <Route
                     path="/user-profile"

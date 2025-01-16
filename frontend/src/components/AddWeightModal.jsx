@@ -41,7 +41,9 @@ const AddWeightModal = ({ isOpen = false, onClose = () => {}, setRefreshKey }) =
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+        return null; //Only render anything if modal is opened
+    }
 
     return (
         <div className="modal">

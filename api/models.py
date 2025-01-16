@@ -7,19 +7,23 @@ from django.conf import settings
 User = settings.AUTH_USER_MODEL
 
 # Create your models here.
-#User Model
+# User Model
 class User(AbstractUser):
-    groups = models.ManyToManyField(
-        "auth.Group",
-        related_name="api_user_set",
+    profile_picture = models.ImageField(
+        upload_to="profile_pictures/",
+        blank=True,
+        null=True,
+        default="profile_pictures/default.png", #default profile picture for all users
     )
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='api_user_permissions_set',
-    )
-    
+
     def __str__(self):
         return f'{self.username}'
+
+    class Meta:
+        # Meta options for your model
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
     
 #Food/Macros Model
 class Food(models.Model):
@@ -29,36 +33,99 @@ class Food(models.Model):
     carbohydrates   = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(0.0))
     protein         = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(0.0))
     fat             = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(0.0))
+    
+    serving_size    = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #g
+    fat_saturated   = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #g
+    sodium          = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #mg
+    potassium       = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #mg
+    cholesterol     = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #mg
+    fiber           = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #g
+    sugar           = models.DecimalField(max_digits=6, decimal_places=1, default=None, null=True, blank=True) #g
     #category for food types?
     
     #calculate calories/macros based on quantity of food entry
     def calculate_nutrition_for_quantity(self, quantity):
         if self.quantity == 0:
-            return {
-                "calories": 0,
-                "carbohydrates": 0,
-                "protein": 0,
-                "fat": 0
-            }
+            return {field: 0 for field in [
+                "calories",
+                "carbohydrates",
+                "protein",
+                "fat",
+                "fat_saturated",
+                "sodium",
+                "potassium",
+                "cholesterol",
+                "fiber",
+                "sugar"
+            ]}
         
         amount = Decimal(str(quantity)) / Decimal(str(self.quantity))
         return {
-            "calories":      Decimal(self.calories * amount),
+            "calories":      Decimal(self.calories      * amount),
             "carbohydrates": Decimal(self.carbohydrates * amount),
-            "protein":       Decimal(self.protein * amount),
-            "fat":           Decimal(self.fat * amount),
+            "protein":       Decimal(self.protein       * amount),
+            "fat":           Decimal(self.fat           * amount),
+            "fat_saturated": Decimal((self.fat_saturated or 0) * amount),
+            "sodium":        Decimal((self.sodium        or 0) * amount),
+            "potassium":     Decimal((self.potassium     or 0) * amount),
+            "cholesterol":   Decimal((self.cholesterol   or 0) * amount),
+            "fiber":         Decimal((self.fiber         or 0) * amount),
+            "sugar":         Decimal((self.sugar         or 0) * amount),
+        }
+        
+    #calculate nutrition for 1 serving of food item
+    def calculate_nutrition_for_serving_size(self):
+        if not self.serving_size or self.quantity == 0:
+            return {field: None for field in [
+                "calories",
+                "carbohydrates",
+                "protein",
+                "fat",
+                "fat_saturated",
+                "sodium",
+                "potassium",
+                "cholesterol",
+                "fiber",
+                "sugar"
+            ]}
+
+        amount = Decimal(str(self.serving_size)) / Decimal(100.0)
+        return {
+            "calories":      Decimal(self.calories      * amount),
+            "carbohydrates": Decimal(self.carbohydrates * amount),
+            "protein":       Decimal(self.protein       * amount),
+            "fat":           Decimal(self.fat           * amount),
+            "fat_saturated": Decimal((self.fat_saturated or 0) * amount),
+            "sodium":        Decimal((self.sodium        or 0) * amount),
+            "potassium":     Decimal((self.potassium     or 0) * amount),
+            "cholesterol":   Decimal((self.cholesterol   or 0) * amount),
+            "fiber":         Decimal((self.fiber         or 0) * amount),
+            "sugar":         Decimal((self.sugar         or 0) * amount),
         }
         
     def __str__(self):
         return self.name
     
     def clean(self):
-        #Ensure all relevant fields are Decimal
-        self.quantity       = round(Decimal(self.quantity), 1)
-        self.calories       = round(Decimal(self.calories), 1)
-        self.carbohydrates  = round(Decimal(self.carbohydrates), 1)
-        self.protein        = round(Decimal(self.protein), 1)
-        self.fat            = round(Decimal(self.fat), 1)
+        #Ensure all relevant fields are Decimal and rounded
+        fields_to_round = [
+            "quantity", 
+            "calories", 
+            "carbohydrates", 
+            "protein", 
+            "fat",
+            "fat_saturated",
+            "sodium",
+            "potassium",
+            "cholesterol",
+            "fiber",
+            "sugar",
+            "serving_size"
+        ]
+        for field in fields_to_round:
+            value = getattr(self, field, None)
+            if value is not None:
+                setattr(self, field, round(Decimal(value), 1))
     
     def save(self, *args, **kwargs):
         self.clean()

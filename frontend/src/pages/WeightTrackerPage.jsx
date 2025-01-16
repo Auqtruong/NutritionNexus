@@ -97,8 +97,8 @@ const WeightTrackerPage = () => {
             {/* Sorting */}
             <SortingDropDown
                 categories={[
-                    "Weight Entry Date",
-                    "Weight"
+                    "Weight",
+                    "Weight Entry Date"
                 ]}
                 onSortChange={handleSortChange}
             />

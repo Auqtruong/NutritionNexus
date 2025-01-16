@@ -69,13 +69,13 @@ const SortingDropDown = ({ categories, onSortChange }) => {
     );
 };
 
-// Prop types validation
+//Prop types validation
 SortingDropDown.propTypes = {
     categories: PropTypes.arrayOf(PropTypes.string).isRequired,
     onSortChange: PropTypes.func.isRequired,
 };
 
-// Default props (if no categories are provided)
+//Default props (if no categories are provided)
 SortingDropDown.defaultProps = {
     categories: [],
     onSortChange: () => {},

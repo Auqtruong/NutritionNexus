@@ -1,17 +1,20 @@
-from django.utils.timezone import now
+import logging
 from decimal import Decimal
+from django.utils.timezone import now
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.filters import OrderingFilter
 from rest_framework_simplejwt.tokens import RefreshToken
-from django_filters.rest_framework import DjangoFilterBackend
 from .filters import FoodFilter, DailyIntakeFilter, WeightLogFilter
-from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer, WeightTrackerSerializer, DashboardSerializer
+from .serializers import FoodCreateSerializer, UserSerializer, FoodSerializer, FoodDetailSerializer, DailyIntakeSerializer, WeightTrackerSerializer, DashboardSerializer, UserProfileSerializer
 from .models import Food, DailyIntake, WeightTracker
 from .utils import fetch_nutrition_data
 
@@ -42,13 +45,49 @@ class UpdateUserView(UpdateAPIView):
         return self.request.user
     
 #Delete user view
-class DeleteUserView(DestroyAPIView):
-    queryset           = User.objects.all()
+class DeleteUserView(APIView):
     permission_classes = [IsAuthenticated]
-    
-    def get_object(self):
-        return self.request.user
 
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        password = request.data.get("password")
+
+        #Check if password is provided
+        if not password:
+            return Response({"error": "Password is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        #Validate password
+        if not user.check_password(password):
+            return Response({"error": "Invalid password."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        #Delete user
+        user.delete()
+        return Response({"message": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+    
+class UserProfileView(RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return {
+			"request": self.request
+		}
+    
+#Upload profile picture view
+class UploadProfilePictureView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if 'profile_picture' not in request.FILES:
+            return Response({"error": "No profile picture uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        profile_picture = request.FILES['profile_picture']
+        user.profile_picture = profile_picture
+        user.save()
+
+        return Response({"message": "Profile picture uploaded successfully."}, status=status.HTTP_200_OK)
 
 #Logout view; POST view that logs out authenticated users, returning a 200 response for success
 @api_view(["POST"])
@@ -92,7 +131,7 @@ def get_nutrition_data(request):
     else:
         return Response({"error": "Failed to fetch nutrition data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-#Add new foods to list/database of foods; return 400 if request is unsuccessful
+#Add new foods to list/database of foods; return 201 success, 400 if request is unsuccessful, 500 internal error
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_food(request):
@@ -107,20 +146,34 @@ def add_food(request):
             for item in nutrition_data["items"]:
                 try:
                     food = Food.objects.create(
-                        name=item["name"],
-                        calories=item["calories"],
-                        carbohydrates=item["carbohydrates_total_g"],
-                        protein=item["protein_g"],
-                        fat=item["fat_total_g"],
-                        user=request.user
+                        name            =item["name"],
+                        quantity        =Decimal(100.0), #default 100g
+                        calories        =item.get("calories", 0.0),
+                        carbohydrates   =item.get("carbohydrates_total_g", 0.0),
+                        protein         =item.get("protein_g", 0.0),
+                        fat             =item.get("fat_total_g", 0.0),
+                        serving_size    =item.get("serving_size_g"),
+                        fat_saturated   =item.get("fat_saturated_g"),
+                        sodium          =item.get("sodium_mg"),
+                        potassium       =item.get("potassium_mg"),
+                        cholesterol     =item.get("cholesterol_mg"),
+                        fiber           =item.get("fiber_g"),
+                        sugar           =item.get("sugar_g"),
+                        user            =request.user
                     )
                     saved_foods.append(food.name)
                 except Exception as e:
-                    continue #Put errors here specific to saving foods
-            return Response({"message": "Food items added successfully", "foods": saved_foods}, status=status.HTTP_201_CREATED)
+                    logging.error(f"Error saving food '{item['name']}': {e}")
+                    continue
+            if saved_foods:
+                return Response(
+                    {"message": "Food items added successfully", "foods": saved_foods}, status=status.HTTP_201_CREATED)
+            else:
+                return Response(
+                    {"error": "Failed to save any food items"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return Response({"error": "Failed to fetch nutrition data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response(
+                {"error": "Failed to fetch nutrition data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Delete existing/created foods from list/database of foods; 200 success, 400 for none selected or available, 500 for error

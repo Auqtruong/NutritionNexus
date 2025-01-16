@@ -32,8 +32,8 @@ const WeightTracker = ({ sortOptions, filters, onCheckboxChange, onEdit, refresh
                                     }
                                 />
                             </th>
-                            <th>Date</th>
                             <th>Weight (kg)</th>
+                            <th>Date</th>
                             <th>Actions</th> {/* Actions column for Edit button(s) */}
                         </tr>
                     </thead>
@@ -51,8 +51,8 @@ const WeightTracker = ({ sortOptions, filters, onCheckboxChange, onEdit, refresh
                                         }
                                     />
                                 </td>
-                                <td>{new Date(item.weight_entry_date).toLocaleDateString()}</td>
                                 <td>{item.weight}</td>
+                                <td>{new Date(item.weight_entry_date).toLocaleDateString()}</td>
                                 <td>
                                     <button onClick={() => onEdit(item)}>
                                         Edit
