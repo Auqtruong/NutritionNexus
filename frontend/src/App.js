@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Router, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import DailyIntakePage from "./pages/DailyIntakePage";
@@ -7,84 +7,109 @@ import FoodDetailPage from "./pages/FoodDetailPage";
 import WeightTrackerPage from "./pages/WeightTrackerPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardPage from "./pages/DashboardPage"
+import Navbar from "./components/Navbar";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
+    const [userData, setUserData] = useState(null);
+
+    //Grab user profile data
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch("/api/user/profile/");
+                if (!response.ok) { //unsuccessful fetch
+                    throw new Error("Failed to fetch user data");
+                }
+                const data = await response.json();
+                setUserData(data);
+            }
+            catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
+        fetchUserData();
+    }, []);
+
+    //Group routes/pages that use Navbar together
+    const ProtectedLayout = ({ children }) => (
+        <>
+            <Navbar userData={userData} />
+            {children}
+        </>
+    );
+
     return (
         <Router>
             <Routes>
-                {/* Path for undefined routes */}
-                <Route 
-                    path="*" 
-                    element={<div>Page Not Found</div>} 
-                />
-
-                {/* Redirect default route/landing page ("/") to login route */}
-                <Route 
-                    path="/" 
-                    element={<Navigate to="/login" />} 
-                />
-                
-                {/* Register route */}
-                <Route 
-                    path="/register" 
-                    element={<RegisterPage />} 
-                />
-
-                {/* Login route; route to daily intake if already logged in */}
+                {/* Routes without Navbar */}
+                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/register" element={<RegisterPage />} />
                 <Route
                     path="/login"
-                    element={
-                        isAuthenticated() ? (<Navigate to="/daily-intake" />) : (<LoginPage />)
-                    }
+                    element={isAuthenticated() ? (<Navigate to="/daily-intake" />) : (<LoginPage />)}
                 />
+                <Route path="*" element={<div>Page Not Found</div>} />
 
-                {/* Daily Intake route */}
-                <Route
-                    path="/daily-intake"
-                    element={
-                        <ProtectedRoute>
-                            <DailyIntakePage />
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* Food List route */}
+                {/* Routes with Navbar */}
                 <Route
                     path="/food-list"
                     element={
                         <ProtectedRoute>
-                            <FoodListPage />
+                            <ProtectedLayout>
+                                <FoodListPage />
+                            </ProtectedLayout>
                         </ProtectedRoute>
                     }
                 />
-
-                {/* Food Detail route */}
+                <Route
+                    path="/daily-intake"
+                    element={
+                        <ProtectedRoute>
+                            <ProtectedLayout>
+                                <DailyIntakePage />
+                            </ProtectedLayout>
+                        </ProtectedRoute>
+                    }
+                />
                 <Route
                     path="/food/:foodId"
                     element={
                         <ProtectedRoute>
-                            <FoodDetailPage />
+                            <ProtectedLayout>
+                                <FoodDetailPage />
+                            </ProtectedLayout>
                         </ProtectedRoute>
                     }
                 />
-
-                {/* Weight Tracker route */}
                 <Route
                     path="/weight-tracker"
                     element={
                         <ProtectedRoute>
-                            <WeightTrackerPage />
+                            <ProtectedLayout>
+                                <WeightTrackerPage />
+                            </ProtectedLayout>
                         </ProtectedRoute>
                     }
                 />
-
-                {/* User Profile route */}
                 <Route
                     path="/user-profile"
                     element={
                         <ProtectedRoute>
-                            <UserProfilePage />
+                            <ProtectedLayout>
+                                <UserProfilePage />
+                            </ProtectedLayout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <ProtectedLayout>
+                                <DashboardPage />
+                            </ProtectedLayout>
                         </ProtectedRoute>
                     }
                 />

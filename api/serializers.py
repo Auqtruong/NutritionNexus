@@ -18,6 +18,16 @@ class UserSerializer(serializers.ModelSerializer):
             "profile_picture": {"required": False},  #optional
         }
         
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with that username already exists.")
+        return value
+    
+    def validate_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        return value
+    
     def create(self, validatedData):
         #user will be created if user data/fields are validated by previous check
         user = User.objects.create_user(**validatedData)

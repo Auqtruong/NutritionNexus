@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 from decimal import Decimal
 
@@ -13,7 +14,7 @@ class User(AbstractUser):
         upload_to="profile_pictures/",
         blank=True,
         null=True,
-        default="profile_pictures/default.png", #default profile picture for all users
+        default="profile_pictures/default.jpg", #default profile picture for all users
     )
 
     def __str__(self):
@@ -141,7 +142,7 @@ class DailyIntake(models.Model):
     food_eaten      = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="intakes")
     
     #100g default for food entries
-    food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(100.00))
+    food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(100.00), validators=[MinValueValidator(1), MaxValueValidator(1000)])
     food_entry_date = models.DateField(default=timezone.now)
     
     calories        = models.DecimalField(max_digits=6, decimal_places=1, editable=False, default=Decimal(0.0))
@@ -189,6 +190,7 @@ class WeightTracker(models.Model):
         verbose_name        = "Weight Log"
         verbose_name_plural = "Weight Logs"
         ordering            = ["-weight_entry_date"]
+        unique_together     = ("user", "weight_entry_date")
     
     def __str__(self):
         return f'{self.user.username} - {self.weight} lbs on {self.weight_entry_date}'

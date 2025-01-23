@@ -29,7 +29,7 @@ const UpdateAccountModal = ({ isOpen = false, onClose = () => {}, setRefreshKey 
 
         try {
             const response = await fetchWithAuth("/api/user/update/", {
-                method: "PUT",
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
