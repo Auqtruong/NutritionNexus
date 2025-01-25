@@ -51,15 +51,16 @@ class UpdateUserView(UpdateAPIView):
         partial = kwargs.get('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
         
         has_changes = False
-        for field, value in serializer.validated_data.items():
-            if getattr(instance, field, None) != value:
-                has_changes = True
-                break
+        has_changes = any(
+            getattr(instance, field, None) != value
+            for field, value in serializer.initial_data.items()
+        )
         if not has_changes:
             return Response({"error": "No changes detected."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.is_valid(raise_exception=True)
             
         self.perform_update(serializer)
         return Response({"message": "User updated successfully.", "data": serializer.data}, status=status.HTTP_200_OK)
@@ -179,7 +180,6 @@ def add_food(request):
                         cholesterol     =item.get("cholesterol_mg"),
                         fiber           =item.get("fiber_g"),
                         sugar           =item.get("sugar_g"),
-                        user            =request.user
                     )
                     saved_foods.append(food.name)
                 except Exception as e:

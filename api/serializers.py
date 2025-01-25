@@ -41,12 +41,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 #Serializer for paginated list of foods 
 class FoodSerializer(serializers.ModelSerializer):
+    calories        = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    carbohydrates   = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    protein         = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    fat             = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    
     class Meta:
         model = Food
         fields = ["id", "name", "calories", "carbohydrates", "protein", "fat"]
         
 #Serializer for creating new foods
 class FoodCreateSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=255)
+
     class Meta:
         model = Food
         fields = [
@@ -64,12 +71,46 @@ class FoodCreateSerializer(serializers.ModelSerializer):
             "fiber",
             "sugar",
         ]
+        extra_kwargs = {
+            "quantity": {"required": False},
+            "calories": {"required": False},
+            "carbohydrates": {"required": False},
+            "protein": {"required": False},
+            "fat": {"required": False},
+            "serving_size": {"required": False},
+            "fat_saturated": {"required": False},
+            "sodium": {"required": False},
+            "potassium": {"required": False},
+            "cholesterol": {"required": False},
+            "fiber": {"required": False},
+            "sugar": {"required": False},
+        }
         
     def create(self, validated_data):
         return super().create(validated_data)
+
+    def validate_name(self, value):
+        if Food.objects.filter(name__iexact=value).exists():
+            raise serializers.ValidationError("A food item with this name already exists.")
+        return value
         
 #Serializer for specific details (cals/macros) of a food
 class FoodDetailSerializer(serializers.ModelSerializer):
+    nutrition_per_serving = serializers.SerializerMethodField()
+    calories              = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    carbohydrates         = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    protein               = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    fat                   = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False)
+    fat_saturated         = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False, allow_null=True)
+    sodium                = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False, allow_null=True)
+    potassium             = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False, allow_null=True)
+    cholesterol           = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False, allow_null=True)
+    fiber                 = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False, allow_null=True)
+    sugar                 = serializers.DecimalField(max_digits=6, decimal_places=1, coerce_to_string=False, allow_null=True)
+    
+    def get_nutrition_per_serving(self, obj):
+        return obj.calculate_nutrition_for_serving_size()
+    
     class Meta:
         model = Food
         fields = [
@@ -87,6 +128,7 @@ class FoodDetailSerializer(serializers.ModelSerializer):
             "cholesterol",
             "fiber",
             "sugar",
+            "nutrition_per_serving",
         ]
         
 #Serializer for a user's Daily Intake Log

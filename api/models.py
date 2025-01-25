@@ -28,7 +28,7 @@ class User(AbstractUser):
     
 #Food/Macros Model
 class Food(models.Model):
-    name            = models.CharField(max_length=75)
+    name            = models.CharField(max_length=75, unique=True)
     quantity        = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(100.0))
     calories        = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(0.0))
     carbohydrates   = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(0.0))
@@ -92,16 +92,16 @@ class Food(models.Model):
 
         amount = Decimal(str(self.serving_size)) / Decimal(100.0)
         return {
-            "calories":      Decimal(self.calories      * amount),
-            "carbohydrates": Decimal(self.carbohydrates * amount),
-            "protein":       Decimal(self.protein       * amount),
-            "fat":           Decimal(self.fat           * amount),
-            "fat_saturated": Decimal((self.fat_saturated or 0) * amount),
-            "sodium":        Decimal((self.sodium        or 0) * amount),
-            "potassium":     Decimal((self.potassium     or 0) * amount),
-            "cholesterol":   Decimal((self.cholesterol   or 0) * amount),
-            "fiber":         Decimal((self.fiber         or 0) * amount),
-            "sugar":         Decimal((self.sugar         or 0) * amount),
+            "calories":      round(Decimal(self.calories      * amount), 1),
+            "carbohydrates": round(Decimal(self.carbohydrates * amount), 1),
+            "protein":       round(Decimal(self.protein       * amount), 1),
+            "fat":           round(Decimal(self.fat           * amount), 1),
+            "fat_saturated": round(Decimal((self.fat_saturated or 0) * amount), 1),
+            "sodium":        round(Decimal((self.sodium        or 0) * amount), 1),
+            "potassium":     round(Decimal((self.potassium     or 0) * amount), 1),
+            "cholesterol":   round(Decimal((self.cholesterol   or 0) * amount), 1),
+            "fiber":         round(Decimal((self.fiber         or 0) * amount), 1),
+            "sugar":         round(Decimal((self.sugar         or 0) * amount), 1),
         }
         
     def __str__(self):
