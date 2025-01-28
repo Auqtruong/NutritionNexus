@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -240,15 +241,20 @@ def add_to_daily_intake(request):
     food_id       = request.data.get("food_id")
     food_quantity = Decimal(request.data.get("food_quantity", 100.00))
     
+    if not food_id:
+        return Response({"error": "food_id is required"}, status=status.HTTP_400_BAD_REQUEST)
     try:
         food = Food.objects.get(id=food_id)
-        DailyIntake.objects.create(
-            user=user, 
-            food_eaten=food,
-            food_quantity=food_quantity,
-            food_entry_date=request.data.get("date")
-        )
-        return Response({"message": f"{food.name} added to your daily intake"}, status=status.HTTP_201_CREATED)
+        try:
+            DailyIntake.objects.create(
+                user=user, 
+                food_eaten=food,
+                food_quantity=food_quantity,
+                food_entry_date=request.data.get("date", now().date())
+            )
+            return Response({"message": f"{food.name} added to your daily intake"}, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return Response({"error": e.message_dict}, status=status.HTTP_400_BAD_REQUEST)
     except Food.DoesNotExist:
         return Response({"error": "Food item not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -262,7 +268,7 @@ def delete_from_daily_intake(request):
     try:
         deleted_count, _ = DailyIntake.objects.filter(id__in=ids, user=request.user).delete()
         if deleted_count == 0:
-            return Response({"error": "No matching entries found to delete"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No matching entries found to delete. Ensure the selected items belong to you and exist."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"Deleted {deleted_count} entries successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

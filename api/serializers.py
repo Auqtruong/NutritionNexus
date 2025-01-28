@@ -1,3 +1,4 @@
+from django.utils.timezone import now
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
@@ -138,7 +139,13 @@ class DailyIntakeSerializer(serializers.ModelSerializer):
     carbohydrates   = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
     protein         = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
     fat             = serializers.DecimalField(read_only=True, max_digits=6, decimal_places=1)
+    food_entry_date = serializers.DateField(default=now)
     
+    def validate(self, data):
+        if "food_entry_date" not in data:
+            print("Default for food_entry_date:", now())  # Debug output
+        return data
+
     class Meta:
         model = DailyIntake
         fields = ["id", "food_eaten", "calories", "carbohydrates", "protein", "fat", "food_entry_date"]

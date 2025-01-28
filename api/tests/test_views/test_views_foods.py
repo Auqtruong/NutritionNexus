@@ -43,7 +43,7 @@ class TestFoodDetailView(TestCase):
         self.assertEqual(food.carbohydrates, round(Decimal(14.0), 1))
         self.assertEqual(food.fat,           round(Decimal(0.2), 1))
         
-    def test_food_detail_with_serving_size(self):
+    def test_food_detail_success_with_serving_size(self):
         response = self.client.get(self.url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -56,7 +56,7 @@ class TestFoodDetailView(TestCase):
         self.assertEqual(Decimal(response.data["nutrition_per_serving"]["protein"]),        round(Decimal(0.3)  * scale_factor, 1))
         self.assertEqual(Decimal(response.data["nutrition_per_serving"]["fat"]),            round(Decimal(0.2)  * scale_factor, 1))
 
-    def test_food_detail_not_found(self):
+    def test_food_detail_failure_not_found(self):
         url = reverse("food-detail", args=[999])
         response = self.client.get(url)
 
@@ -80,7 +80,7 @@ class TestGetNutritionData(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["calories"], 52.0)
 
-    def test_get_nutrition_data_no_food_query(self):
+    def test_get_nutrition_data_failure_no_food_query(self):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -121,7 +121,7 @@ class TestAddFoodView(TestCase):
         self.assertEqual(apple.fat,             round(Decimal("0.2"), 1))
         
     @patch("api.views.fetch_nutrition_data")
-    def test_add_food_with_failed_nutrition_fetch(self, mock_fetch):
+    def test_add_food_failure_with_failed_nutrition_fetch(self, mock_fetch):
         mock_fetch.return_value = None
         
         data = {"name": "Peach"}

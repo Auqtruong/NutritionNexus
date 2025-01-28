@@ -154,7 +154,6 @@ class TestUserProfileView(TestCase):
         self.user   = User.objects.create_user(username="testuser", password="securepassword123")
         self.client.force_authenticate(user=self.user)
         self.url         = reverse("user-profile")
-       
 
     def test_fetch_user_profile(self):
         response = self.client.get(self.url)
@@ -170,7 +169,6 @@ class TestUploadProfilePictureView(TestCase):
         self.client.force_authenticate(user=self.user)
         self.fake_image = SimpleUploadedFile(name="test_image.jpg", content=b"fake image content", content_type="image/jpeg")
         self.url        = reverse("upload-profile-picture")
-
         
     def tearDown(self):
         shutil.rmtree(tempfile.gettempdir(), ignore_errors=True)
