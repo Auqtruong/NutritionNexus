@@ -1,8 +1,10 @@
+from datetime import date, datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
 from django.utils import timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 User = settings.AUTH_USER_MODEL
@@ -142,7 +144,7 @@ class DailyIntake(models.Model):
     food_eaten      = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="intakes")
     
     #100g default for food entries
-    food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(100.00), validators=[MinValueValidator(1), MaxValueValidator(1000)])
+    food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(100.00), validators=[MinValueValidator(Decimal("1.0")), MaxValueValidator(Decimal("1000.0"))])
     food_entry_date = models.DateField(default=timezone.now)
     
     calories        = models.DecimalField(max_digits=6, decimal_places=1, editable=False, default=Decimal(0.0))
@@ -179,19 +181,54 @@ class DailyIntake(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.food_eaten.name}'
 
-#Weight Tracker Model
+# Weight Tracker Model
 class WeightTracker(models.Model):
     user                = models.ForeignKey(User, on_delete=models.CASCADE, related_name="weight_logs")
-    weight              = models.DecimalField(max_digits=6, decimal_places=2)
+    weight              = models.DecimalField(max_digits=6, decimal_places=1)
     weight_entry_date   = models.DateField(default=timezone.now)
     
     class Meta:
-        #chronological ordering
         verbose_name        = "Weight Log"
         verbose_name_plural = "Weight Logs"
         ordering            = ["-weight_entry_date"]
         unique_together     = ("user", "weight_entry_date")
     
+    def clean(self):
+        min_date = date(2000, 1, 1)
+        max_date = date.today()
+        
+        if isinstance(self.weight, str):
+            try:
+                self.weight = Decimal(self.weight)
+            except (ValueError, InvalidOperation):
+                raise ValidationError("Invalid weight format. Please provide a valid number.")
+
+        if isinstance(self.weight_entry_date, str):
+            try:
+                self.weight_entry_date = datetime.strptime(self.weight_entry_date, '%Y-%m-%d').date()
+            except ValueError:
+                raise ValidationError("Invalid date format. Use the format YYYY-MM-DD.")
+
+        try:
+            self.weight_entry_date = date(self.weight_entry_date.year, self.weight_entry_date.month, self.weight_entry_date.day)
+        except ValueError:
+            raise ValidationError("The date provided does not exist. Please provide a valid date.")
+
+        if self.weight_entry_date < min_date or self.weight_entry_date > max_date:
+            raise ValidationError(f"Date must be between {min_date} and {max_date}.")
+
+        if self.weight is None:
+            raise ValidationError("Weight is required.")
+        
+        weight_min_validator = MinValueValidator(Decimal("1.0"))
+        weight_max_validator = MaxValueValidator(Decimal("500.0"))
+        
+        weight_min_validator(self.weight)
+        weight_max_validator(self.weight)
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f'{self.user.username} - {self.weight} lbs on {self.weight_entry_date}'
-    

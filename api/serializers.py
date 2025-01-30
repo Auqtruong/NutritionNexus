@@ -143,7 +143,7 @@ class DailyIntakeSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         if "food_entry_date" not in data:
-            print("Default for food_entry_date:", now())  # Debug output
+            print("Default for food_entry_date:", now())
         return data
 
     class Meta:
@@ -167,7 +167,7 @@ class DashboardSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         user = self.context['request'].user
-        today = self.context['today']
+        today = now().date()
         
         #Daily intake data
         daily_intake = DailyIntake.objects.filter(user=user, food_entry_date=today)

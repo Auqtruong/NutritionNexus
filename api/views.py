@@ -1,6 +1,7 @@
 import logging
 from decimal import Decimal
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.utils.timezone import now
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -291,11 +292,17 @@ class WeightLogListView(ListAPIView):
 @permission_classes([IsAuthenticated])
 def record_weight(request):
     weight = request.data.get("weight")
-    if not isinstance(weight, (int, float)):
-        return Response({"error": "Invalid weight value"}, status=status.HTTP_400_BAD_REQUEST)
-    WeightTracker.objects.create(user=request.user, weight=weight, weight_entry_date=request.data.get("date"))
-    return Response({"message": "Weight recorded successfully"}, status=status.HTTP_201_CREATED)
-
+    try:
+        WeightTracker.objects.create(
+            user=request.user, 
+            weight=weight, 
+            weight_entry_date=request.data.get("date"))
+        return Response({"message": "Weight recorded successfully"}, status=status.HTTP_201_CREATED)
+    except IntegrityError:
+        return Response({"error": "A record with this date already exists."}, status=status.HTTP_400_BAD_REQUEST)
+    except ValidationError as e:
+            return Response({"error": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+        
 #Update User Weight View; 200 for success, 400 for invalid value entered, 404 if unable to find weight; default to existing entry if no new weight is provided
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
@@ -303,12 +310,15 @@ def update_weight(request, pk):
     try:
         weight_entry = WeightTracker.objects.get(id=pk, user=request.user)
         weight       = request.data.get("weight")
-        if not isinstance(weight, (int, float)):
-            return Response({"error": "Invalid weight value"}, status=status.HTTP_400_BAD_REQUEST)
-        weight_entry.weight = weight
+        if weight is not None:
+            if not isinstance(weight, (int, float)):
+                return Response({"error": "Invalid weight value"}, status=status.HTTP_400_BAD_REQUEST)
+            weight_entry.weight = weight
         weight_entry.weight_entry_date = request.data.get("date") or weight_entry.weight_entry_date
         weight_entry.save()
         return Response({"message": "Weight entry updated successfully"}, status=status.HTTP_200_OK)
+    except IntegrityError:
+        return Response({"error": "A record with this date already exists."}, status=status.HTTP_400_BAD_REQUEST)
     except WeightTracker.DoesNotExist:
         return Response({"error": "Weight entry not found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -320,14 +330,20 @@ def delete_weight(request):
     ids = request.data.get("ids", [])  # Retrieve IDs associated with selected weights
     if not ids:
         return Response({"error": "No IDs provided"}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        deleted_count, _ = WeightTracker.objects.filter(id__in=ids, user=request.user).delete()
-        if deleted_count == 0:
-            return Response({"error": "No matching entries found to delete"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"message": f"Deleted {deleted_count} weight entries successfully"}, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
+    valid_ids        = WeightTracker.objects.filter(id__in=ids, user=request.user).values_list("id", flat=True)
+    invalid_ids      = set(ids) - set(valid_ids)
+    deleted_count, _ = WeightTracker.objects.filter(id__in=valid_ids).delete()
+    
+    response_data = {"message": f"Deleted {deleted_count} weight entries successfully"}
+    
+    if invalid_ids:
+        response_data["invalid_ids"] = list(invalid_ids)
+        
+    if deleted_count > 0:
+        return Response(response_data, status=status.HTTP_200_OK)
+    else:
+        return Response(response_data, status=status.HTTP_404_NOT_FOUND)
     
 #Dashboard view
 class DashboardView(RetrieveAPIView):
