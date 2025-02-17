@@ -64,16 +64,16 @@ class Food(models.Model):
         
         amount = Decimal(str(quantity)) / Decimal(str(self.quantity))
         return {
-            "calories":      Decimal(self.calories      * amount),
-            "carbohydrates": Decimal(self.carbohydrates * amount),
-            "protein":       Decimal(self.protein       * amount),
-            "fat":           Decimal(self.fat           * amount),
-            "fat_saturated": Decimal((self.fat_saturated or 0) * amount),
-            "sodium":        Decimal((self.sodium        or 0) * amount),
-            "potassium":     Decimal((self.potassium     or 0) * amount),
-            "cholesterol":   Decimal((self.cholesterol   or 0) * amount),
-            "fiber":         Decimal((self.fiber         or 0) * amount),
-            "sugar":         Decimal((self.sugar         or 0) * amount),
+            "calories":      round(Decimal(self.calories      * amount), 1),
+            "carbohydrates": round(Decimal(self.carbohydrates * amount), 1),
+            "protein":       round(Decimal(self.protein       * amount), 1),
+            "fat":           round(Decimal(self.fat           * amount), 1),
+            "fat_saturated": round(Decimal((self.fat_saturated or 0) * amount), 1),
+            "sodium":        round(Decimal((self.sodium        or 0) * amount), 1),
+            "potassium":     round(Decimal((self.potassium     or 0) * amount), 1),
+            "cholesterol":   round(Decimal((self.cholesterol   or 0) * amount), 1),
+            "fiber":         round(Decimal((self.fiber         or 0) * amount), 1),
+            "sugar":         round(Decimal((self.sugar         or 0) * amount), 1),
         }
         
     #calculate nutrition for 1 serving of food item
@@ -110,6 +110,41 @@ class Food(models.Model):
         return self.name
     
     def clean(self):
+        super().clean()
+        
+        #Duplicate name check
+        if self.name:
+            self.name = self.name.strip().title()
+            
+        if Food.objects.filter(name=self.name).exclude(pk=self.pk).exists():
+            raise ValidationError({"name": "A food item with this name already exists."})
+        
+        #Minimum/Non-negative value check
+        errors = {}
+        min_value_validator = MinValueValidator(Decimal("0.0"))
+        min_value_validator = MinValueValidator(Decimal("0.0"))
+        
+        for field in ["quantity", "calories", "carbohydrates", "protein", "fat"]:
+            value = getattr(self, field, None)
+            if value is not None:
+                try:
+                    min_value_validator(value)
+                except ValidationError:
+                    errors[field] = ["Ensure this value is greater than or equal to 0.0."]
+        if errors:
+            raise ValidationError(errors)
+        
+        #Max digit check
+        max_digits = 6
+        fields_to_check = ["quantity", "calories", "carbohydrates", "protein", "fat"]
+        
+        for field in fields_to_check:
+            value = getattr(self, field)
+            if value is not None:
+                str_value = str(value).replace(".", "")
+                if len(str_value) > max_digits:
+                    raise ValidationError({field: f"Ensure that there are no more than {max_digits} digits in total."})
+                
         #Ensure all relevant fields are Decimal and rounded
         fields_to_round = [
             "quantity", 
@@ -129,6 +164,7 @@ class Food(models.Model):
             value = getattr(self, field, None)
             if value is not None:
                 setattr(self, field, round(Decimal(value), 1))
+                
     
     def save(self, *args, **kwargs):
         self.clean()
@@ -144,7 +180,7 @@ class DailyIntake(models.Model):
     food_eaten      = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="intakes")
     
     #100g default for food entries
-    food_quantity   = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(100.00), validators=[MinValueValidator(Decimal("1.0")), MaxValueValidator(Decimal("1000.0"))])
+    food_quantity   = models.DecimalField(max_digits=6, decimal_places=1, default=Decimal(100.00), validators=[MinValueValidator(Decimal("1.0")), MaxValueValidator(Decimal("1000.0"))])
     food_entry_date = models.DateField(default=timezone.now)
     
     calories        = models.DecimalField(max_digits=6, decimal_places=1, editable=False, default=Decimal(0.0))
@@ -157,14 +193,6 @@ class DailyIntake(models.Model):
         verbose_name        = "Daily Log"
         verbose_name_plural = "Daily Logs"
         ordering            = ["-food_entry_date"]
-        
-    def clean(self):
-        #Ensure all relevant fields are Decimal
-        self.food_quantity  = Decimal(self.food_quantity)
-        self.calories       = Decimal(self.calories)
-        self.carbohydrates  = Decimal(self.carbohydrates)
-        self.protein        = Decimal(self.protein)
-        self.fat            = Decimal(self.fat)
         
     #calculate cals/macros based on quantity manually entered; override Django save method
     def save(self, *args, **kwargs):
@@ -194,9 +222,14 @@ class WeightTracker(models.Model):
         unique_together     = ("user", "weight_entry_date")
     
     def clean(self):
+        super().clean()
+        
         min_date = date(2000, 1, 1)
         max_date = date.today()
         
+        if isinstance(self.weight_entry_date, datetime):
+            self.weight_entry_date = self.weight_entry_date.date()
+
         if isinstance(self.weight, str):
             try:
                 self.weight = Decimal(self.weight)
@@ -206,19 +239,21 @@ class WeightTracker(models.Model):
         if isinstance(self.weight_entry_date, str):
             try:
                 self.weight_entry_date = datetime.strptime(self.weight_entry_date, '%Y-%m-%d').date()
-            except ValueError:
-                raise ValidationError("Invalid date format. Use the format YYYY-MM-DD.")
-
-        try:
-            self.weight_entry_date = date(self.weight_entry_date.year, self.weight_entry_date.month, self.weight_entry_date.day)
-        except ValueError:
-            raise ValidationError("The date provided does not exist. Please provide a valid date.")
+            except ValueError as e:
+                raise ValidationError(str(e).capitalize())
 
         if self.weight_entry_date < min_date or self.weight_entry_date > max_date:
             raise ValidationError(f"Date must be between {min_date} and {max_date}.")
 
         if self.weight is None:
             raise ValidationError("Weight is required.")
+        
+        max_digits = 6
+        weight_str = str(self.weight).replace(".", "")
+        if len(weight_str) > max_digits:
+            raise ValidationError(f"Ensure that there are no more than {max_digits} digits in total.")
+        
+        self.weight = round(Decimal(self.weight), 1)
         
         weight_min_validator = MinValueValidator(Decimal("1.0"))
         weight_max_validator = MaxValueValidator(Decimal("500.0"))

@@ -36,20 +36,20 @@ class TestDashboardView(TestCase):
         self.assertEqual(response.data["total_protein"], Decimal("1.4"))
         self.assertEqual(response.data["total_fat"], Decimal("0.5"))
     
-    def test_latest_weight_record(self):
+    def test_dashboard_success_latest_weight_record(self):
         response = self.client.get(self.url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["last_rec_weight"], Decimal("68.5"))
         self.assertEqual(response.data["last_weight_date"], self.today)
     
-    def test_unauthenticated_request(self):
+    def test_dashboard_failure_unauthenticated_request(self):
         self.client.force_authenticate(user=None)
         response = self.client.get(self.url)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
-    def test_no_daily_intake_entries(self):
+    def test_dashboard_success_no_daily_intake_entries(self):
         DailyIntake.objects.all().delete()
         response = self.client.get(self.url)
         
@@ -59,7 +59,7 @@ class TestDashboardView(TestCase):
         self.assertEqual(response.data["total_protein"], Decimal("0"))
         self.assertEqual(response.data["total_fat"], Decimal("0"))
     
-    def test_no_weight_records(self):
+    def test_dashboard_success_no_weight_records(self):
         WeightTracker.objects.all().delete()
         response = self.client.get(self.url)
         
@@ -67,16 +67,7 @@ class TestDashboardView(TestCase):
         self.assertIsNone(response.data["last_rec_weight"])
         self.assertIsNone(response.data["last_weight_date"])
     
-    def test_future_dated_weight_entry(self):
-        future_date = self.today + timedelta(days=5)
-        self.client.post(reverse("weight-list"), {"weight": 75, "date": future_date}, format="json")
-        response = self.client.get(self.url)
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["last_rec_weight"], Decimal("68.5"))
-        self.assertEqual(response.data["last_weight_date"], self.today)
-    
-    def test_no_data_leakage_from_other_users(self):
+    def test_dashboard_success_no_data_leakage_from_other_users(self):
         WeightTracker.objects.create(user=self.other_user, weight=80.0, weight_entry_date=self.today)
         response = self.client.get(self.url)
 
@@ -86,4 +77,12 @@ class TestDashboardView(TestCase):
         self.assertEqual(response.data["total_protein"], Decimal("1.4"))
         self.assertEqual(response.data["total_fat"], Decimal("0.5"))
         self.assertEqual(response.data["last_rec_weight"], Decimal("68.5"))
+        
+    def test_dashboard_failure_cannot_record_future_weight(self):
+        future_date = self.today + timedelta(days=6)
+        response = self.client.post(reverse("record-weight"), {"weight": 75, "date": future_date}, format="json")
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertIn("Date must be between", response.data["error"][0])
 

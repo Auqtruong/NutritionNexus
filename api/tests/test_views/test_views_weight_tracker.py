@@ -96,7 +96,7 @@ class TestRecordWeight(TestCase):
             if "1900-01-01" in date_value or "2100-01-01" in date_value:
                 self.assertIn("Date must be between", response.data["error"][0])
             elif "2025-02-30" in date_value:
-                self.assertIn("Invalid date", response.data["error"][0])
+                self.assertIn("Day is out of range for month", response.data["error"][0])
 
     def test_record_weight_failure_duplicate_weight_creation(self):
         response1 = self.client.post(self.url, {"weight": 72.5, "date": "2025-01-03"}, format="json")

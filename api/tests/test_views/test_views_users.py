@@ -84,7 +84,7 @@ class TestUpdateUserView(TestCase):
         
     def test_update_user_success_multiple_fields(self):
         response = self.client.patch(self.url, self.multi_update_data, format="multipart") 
-               
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, self.multi_update_data["username"])
@@ -141,7 +141,7 @@ class TestDeleteUserView(TestCase):
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertTrue(User.objects.filter(username="testuser").exists())
-     
+        
     def test_delete_user_failure_missing_password(self):
         response = self.client.delete(self.url, data={}, format="json")
         
